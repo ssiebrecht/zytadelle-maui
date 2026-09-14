@@ -1,0 +1,55 @@
+@inherits LabComponent
+
+@* The answer the tool exists to give: for each new record, how many cultures and how many minutes
+   the jump from the previous record cost. The cumulative columns are there for scale; the delta
+   columns are the ones to read. *@
+
+@if (Rows.Count == 0)
+{
+    <p class="pane-note">No record was set - the first culture already reached the target, or none did.</p>
+}
+else
+{
+    <table class="ltable">
+        <thead>
+        <tr>
+            <th>New best cycle</th>
+            <th>Cultures</th>
+            <th>&#916; cultures</th>
+            <th>Sim min</th>
+            <th>&#916; sim min</th>
+            <th>Real min &#215;@Host.Speed</th>
+            <th>&#916; real min</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Rows)
+        {
+            <tr @key="r.Cycle">
+                <td class="num strong">@r.Cycle</td>
+                <td class="num">@r.Runs</td>
+                <td class="num strong">@r.RunsSincePrevious</td>
+                <td class="num">@F1(r.SimMinutes)</td>
+                <td class="num strong">@F1(r.SimMinutesSincePrevious)</td>
+                <td class="num">@F1(r.RealMinutes)</td>
+                <td class="num strong">@F1(r.RealMinutesSincePrevious)</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <p class="pane-note">
+        One campaign - the held-out seed whose result came closest to this build's mean, so it reads
+        as typical rather than lucky. The clock counts time inside cultures only: no shopping, no
+        menus, no idling between runs.
+    </p>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public Finalist Build { get; set; } = null!;
+
+    private IReadOnlyList<LadderRow> Rows => Build.Ladder(Host.Speed);
+
+    private static string F1(double v) => v.ToString("F1", CultureInfo.InvariantCulture);
+}

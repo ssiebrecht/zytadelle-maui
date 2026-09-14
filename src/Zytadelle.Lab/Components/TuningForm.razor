@@ -1,0 +1,158 @@
+@inherits LabComponent
+
+@* One input per number the schema found, grouped by the balance class it lives in.
+
+   Two things the browser build did not have to deal with. There are about five hundred fields, so a
+   group renders its inputs only once it is open, and a filter runs over the paths. And the step of
+   an input is derived from its magnitude rather than hand-set, because nothing hand-written could
+   keep up with a form that discovers itself. *@
+
+<label class="trow trow-filter">
+    <span class="trow-label">Filter</span>
+    <input type="text" value="@_filter" @oninput="OnFilter" placeholder="curve, dna, tank, cap..." />
+    @if (_filter.Length > 0)
+    {
+        <button type="button" class="trow-undo" title="Clear the filter" @onclick="Clear">&#8634;</button>
+    }
+</label>
+
+@if (_filter.Length > 0)
+{
+    <p class="tgroup-note">@Matches.Count of @Host.Fields.Count fields match.</p>
+}
+
+<div class="tuning">
+    @foreach (var group in Groups)
+    {
+        var fields = FieldsOf(group);
+        if (fields.Count == 0) { continue; }
+        var open = IsOpen(group);
+        var changed = Host.ChangedIn(group);
+
+        <details class="tgroup" open="@open">
+            <summary @onclick:preventDefault @onclick="() => Toggle(group)">
+                <span class="tgroup-title">@group</span>
+                <span class="tgroup-count @(changed > 0 ? "is-on" : null)">@(changed > 0 ? changed.ToString() : null)</span>
+                <button type="button" class="tgroup-reset" title="@($"Reset every field in {group}")"
+                        @onclick:stopPropagation @onclick="() => Host.ResetTuning(group)">reset</button>
+            </summary>
+
+            @if (Note(group) is { } note)
+            {
+                <p class="tgroup-note">@note</p>
+            }
+
+            @if (open)
+            {
+                <div class="tgrid">
+                    @foreach (var f in fields)
+                    {
+                        var changedHere = Host.ChangedPaths.Contains(f.Path);
+                        <label class="trow @(changedHere ? "is-changed" : null)" @key="f.Path">
+                            <span class="trow-label" title="@Title(f)">@f.Label</span>
+                            @if (f.Kind == TuningKind.Bool)
+                            {
+                                <input type="checkbox" checked="@(Host.Tuning[f.Path] != 0)" disabled="@Host.Busy"
+                                       @onchange="e => Write(f, (bool?)e.Value == true ? 1 : 0)" />
+                            }
+                            else
+                            {
+                                <input type="number" step="@Step(f)" disabled="@Host.Busy"
+                                       value="@Format(Host.Tuning[f.Path])"
+                                       @onchange="e => Write(f, Parse(e.Value, Host.Tuning[f.Path]))" />
+                            }
+                            @if (changedHere)
+                            {
+                                <button type="button" class="trow-undo" title="@($"Back to {Format(f.Shipped)}")"
+                                        @onclick="() => Host.SetTuning(f.Path, f.Shipped)">&#8634;</button>
+                            }
+                        </label>
+                    }
+                </div>
+            }
+        </details>
+    }
+</div>
+
+@code {
+    private string _filter = string.Empty;
+    private readonly HashSet<string> _open = [nameof(CycleBalance)];
+
+    private IReadOnlyList<TuningField> Matches { get; set; } = [];
+
+    private IEnumerable<string> Groups => Host.Fields.Select(f => f.Group).Distinct();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Matches = Host.Fields;
+    }
+
+    private IReadOnlyList<TuningField> FieldsOf(string group) =>
+        _filter.Length == 0
+            ? [.. Host.Fields.Where(f => f.Group == group)]
+            : [.. Matches.Where(f => f.Group == group)];
+
+    private bool IsOpen(string group) => _filter.Length > 0 || _open.Contains(group);
+
+    private void Toggle(string group)
+    {
+        if (_filter.Length > 0) { return; }
+        if (!_open.Remove(group)) { _open.Add(group); }
+    }
+
+    private void OnFilter(ChangeEventArgs e)
+    {
+        _filter = (e.Value as string ?? string.Empty).Trim();
+        Matches = _filter.Length == 0
+            ? Host.Fields
+            : [.. Host.Fields.Where(f => f.Path.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+                                         || (f.Hint?.Contains(_filter, StringComparison.OrdinalIgnoreCase) ?? false))];
+    }
+
+    private void Clear()
+    {
+        _filter = string.Empty;
+        Matches = Host.Fields;
+    }
+
+    private void Write(TuningField f, double value) => Host.SetTuning(f.Path, value);
+
+    private static double Parse(object? raw, double fallback) =>
+        double.TryParse((raw as string ?? string.Empty).Replace(',', '.'), NumberStyles.Float,
+            CultureInfo.InvariantCulture, out var v) && double.IsFinite(v)
+            ? v
+            : fallback;
+
+    /// <summary>Ten significant figures: the fitted curve constants carry six and must survive editing.</summary>
+    private static string Format(double v) =>
+        v == Math.Floor(v) && Math.Abs(v) < 1e15
+            ? v.ToString("0", CultureInfo.InvariantCulture)
+            : v.ToString("G10", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// A step that matches the size of the number. A hand-kept table would be better and would also
+    /// be wrong the first time someone adds a constant, which is the trade this whole form makes.
+    /// </summary>
+    private static string Step(TuningField f)
+    {
+        if (f.Kind == TuningKind.Int) { return "1"; }
+        var magnitude = Math.Abs(f.Shipped);
+        if (magnitude == 0) { return "0.001"; }
+        var step = Math.Pow(10, Math.Floor(Math.Log10(magnitude)) - 2);
+        return step.ToString("G6", CultureInfo.InvariantCulture);
+    }
+
+    private static string Title(TuningField f) => f.Hint is { Length: > 0 } h ? $"{h}\n{f.Path}" : f.Path;
+
+    private static string? Note(string group) => group switch
+    {
+        nameof(CycleBalance) => "A cycle is spawn phase plus cooldown and runs on a timer: nothing waits for the dish to be cleared.",
+        nameof(EnemyScalingBalance) => "Health and damage of a basic pathogen on Infection 1. Every other pathogen is a multiple of these.",
+        nameof(SpawnBalance) => "Rate and mix move with the logarithm of the cycle. Basics take whatever the other three leave.",
+        nameof(UpgradeBalance) => "The nineteen genes: cap, unlock price, value curve and both price tracks. These are fitted numbers - small changes move a lot.",
+        nameof(SimulationBalance) => "Loop tempo. FixedDt moves the balance itself, not just its resolution: the fire rate is quantised to the tick. FxRingCap and RateWindowSeconds are render-only and a campaign overrides them.",
+        nameof(MissionBalance) => "Daily missions. A campaign never rolls them, so nothing here changes a search.",
+        _ => null,
+    };
+}

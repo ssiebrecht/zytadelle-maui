@@ -1,0 +1,169 @@
+@inherits GameComponent
+
+<header class="topbar">
+
+    <button class="inf-pill hub-only" type="button" @onclick="() => Host.ShowHubView(HubView.Cell)">
+        <Icon Name="cell" />
+        <span>@InfectionBalance.Def(Host.Save.SelectedInfection).Name</span>
+    </button>
+
+    <div class="cycle-wrap run-only">
+        <div class="ring @(Cooldown ? "cooldown" : "")" style="--p: @Ring">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+                <circle class="ring-track" cx="24" cy="24" r="21" />
+                <circle class="ring-fill" cx="24" cy="24" r="21" />
+            </svg>
+            <span class="ring-val">@(World?.Cycle ?? 1)</span>
+        </div>
+        <div class="cycle-meta">
+            <span class="cycle-phase">@PhaseLabel</span>
+            <span class="hud-timer">
+                <Icon Name="clock" />
+                <span>@NumberFormat.Time(World?.Time ?? 0)</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="chips">
+        <div class="chip chip-dna hub-only">
+            <span class="chip-ico"><Icon Name="dna" /></span>
+            <span class="chip-val dna-val">@NumberFormat.Num(Host.Save.Dna)</span>
+            <span class="chip-unit">DNA</span>
+        </div>
+        <button class="chip chip-atp run-only" title="tap to toggle /min" @onclick="() => _showAtpRate = !_showAtpRate">
+            <span class="chip-ico"><Icon Name="atp" /></span>
+            <span class="chip-val atp-val">@NumberFormat.Num(World?.Atp ?? 0)</span>
+            <span class="chip-rate">@AtpRate</span>
+        </button>
+        <button class="chip chip-dna run-only" title="tap to toggle /min" @onclick="() => _showDnaRate = !_showDnaRate">
+            <span class="chip-ico"><Icon Name="dna" /></span>
+            <span class="chip-val dna-val">@NumberFormat.Num(World?.Dna ?? 0)</span>
+            <span class="chip-rate">@DnaRate</span>
+        </button>
+    </div>
+
+    <div class="topbar-actions">
+        <button class="iconbtn hub-only @(_menuOpen ? "open" : "")" aria-label="Menu" aria-haspopup="true"
+                @onclick="() => Toggle(ref _menuOpen)">
+            <Icon Name="gear" />
+        </button>
+        <button class="iconbtn speed-btn run-only @(_speedOpen ? "open" : "")" aria-label="Speed" aria-haspopup="true"
+                @onclick="() => Toggle(ref _speedOpen)">
+            <Icon Name="speed" />
+            <span class="speed-label">@(Host.Save.Speed)&#215;</span>
+        </button>
+    </div>
+
+    @if (_menuOpen || _speedOpen)
+    {
+        @* Catches the next click anywhere else, which is what closes a popover. It belongs inside
+           the topbar: the topbar is a stacking context (z-index 20), so a popover's own z-index only
+           counts within it. A scrim placed outside would stack against the whole topbar and swallow
+           every click meant for an entry in the popover it is supposed to close. *@
+        <div class="popover-scrim" @onclick="CloseAll"></div>
+    }
+
+    <div class="popover menu" hidden="@(!_menuOpen)">
+        <button class="menu-item" type="button" @onclick="ShowRecords">
+            <span class="menu-ico"><Icon Name="records" /></span>
+            Records
+        </button>
+        <button class="menu-item danger" type="button" @onclick="Wipe">
+            <span class="menu-ico"><Icon Name="breach" /></span>
+            <span class="menu-text">
+                <span>@(_confirmWipe ? "Tap again to wipe" : "Wipe save")</span>
+                <span class="menu-sub">DNA, Gene Lab and records are lost</span>
+            </span>
+        </button>
+        <div class="menu-note">Zytadelle v0.1 &#183; autosaves<br />original game, no affiliation</div>
+    </div>
+
+    <div class="popover speed-pop" hidden="@(!_speedOpen)">
+        @foreach (var s in SimulationBalance.Speeds)
+        {
+            var speed = s;
+            <button class="spd @(Host.Save.Speed == speed ? "active" : "")" @onclick="() => PickSpeed(speed)">@speed&#215;</button>
+        }
+    </div>
+
+</header>
+
+@code {
+    private bool _menuOpen;
+    private bool _speedOpen;
+    private bool _confirmWipe;
+    private bool _showAtpRate;
+    private bool _showDnaRate;
+
+    private World? World => Host.World;
+
+    private bool Cooldown => World?.Phase == CyclePhase.Cooldown;
+
+    /// <summary>Fraction of the current phase already elapsed; the ring fills as the phase runs out.</summary>
+    private string Ring
+    {
+        get
+        {
+            if (World is null) return "1";
+            var total = Cooldown ? CycleBalance.Cooldown : CycleBalance.SpawnDuration;
+            var p = Math.Clamp(1 - World.PhaseTimer / total, 0, 1);
+            return p.ToString("0.####", CultureInfo.InvariantCulture);
+        }
+    }
+
+    private string PhaseLabel
+    {
+        get
+        {
+            if (World is null) return "Spawn";
+            var left = (int)Math.Ceiling(Math.Max(0, World.PhaseTimer));
+            return Cooldown ? $"Next {left}s" : $"Spawn {left}s";
+        }
+    }
+
+    private string AtpRate => _showAtpRate && World is not null
+        ? $"+{NumberFormat.Num(Step.PerMinute(World.AtpWindow))}/min"
+        : "";
+
+    private string DnaRate => _showDnaRate && World is not null
+        ? $"+{NumberFormat.Num(Step.PerMinute(World.DnaWindow))}/min"
+        : "";
+
+    private void Toggle(ref bool flag)
+    {
+        var next = !flag;
+        CloseAll();
+        flag = next;
+    }
+
+    private void CloseAll()
+    {
+        _menuOpen = false;
+        _speedOpen = false;
+        _confirmWipe = false;
+    }
+
+    private void PickSpeed(int speed)
+    {
+        Host.SetSpeed(speed);
+        CloseAll();
+    }
+
+    private void ShowRecords()
+    {
+        CloseAll();
+        Host.ShowHubView(HubView.Records);
+    }
+
+    /// <summary>Wiping is irreversible, so the same button has to be pressed twice.</summary>
+    private void Wipe()
+    {
+        if (!_confirmWipe)
+        {
+            _confirmWipe = true;
+            return;
+        }
+        CloseAll();
+        Host.ResetSave();
+    }
+}

@@ -1,0 +1,86 @@
+@inherits GameComponent
+
+@* The shell of the browser build, unchanged in structure: topbar, the dish as hero, a sheet and a
+   contextual bottom nav. Which half is visible is decided by CSS from the mode class, exactly as
+   before, and the stylesheet already turns the sheet into a side panel from 900 px up. *@
+
+<div class="app">
+    <div class="shell @ModeClass" id="shell">
+
+        <TopBar />
+
+        @* Empty on purpose: the canvas layer underneath follows this rectangle. *@
+        <div class="arena-wrap" id="arena-slot">
+            <div class="hero-brand hub-only">
+                <div class="brand-title">Zytadelle</div>
+                <div class="brand-sub">Idle Cell Defense</div>
+            </div>
+            <HpPlate />
+        </div>
+
+        <div class="sheet" id="sheet">
+            <div class="sheet-grab" aria-hidden="true"></div>
+
+            <section class="screen hub" hidden="@(Host.Mode != Mode.Hub)">
+                @if (Host.Mode == Mode.Hub)
+                {
+                    switch (Host.HubView)
+                    {
+                        case HubView.Cell:
+                            <CellView />
+                            break;
+                        case HubView.Genome:
+                            <GeneLabView />
+                            break;
+                        case HubView.Missions:
+                            <MissionsView />
+                            break;
+                        case HubView.Records:
+                            <RecordsView />
+                            break;
+                    }
+                }
+            </section>
+
+            <section class="screen run" hidden="@(Host.Mode == Mode.Hub)">
+                @if (Host.Mode != Mode.Hub)
+                {
+                    <RunShop />
+                }
+            </section>
+        </div>
+
+        <BottomNav />
+
+        @if (Host.Mode == Mode.Results && Host.Result is { } result)
+        {
+            <ResultsOverlay Result="result" />
+        }
+    </div>
+
+    <div class="grain" aria-hidden="true"></div>
+    <ArenaHost ShowProbe="ShowProbe" />
+</div>
+
+@code {
+    private string ModeClass => Host.Mode switch
+    {
+        Mode.Hub => "mode-hub",
+        Mode.Run => "mode-run",
+        _ => "mode-run mode-results",
+    };
+
+    /// <summary>The frame-budget probe is a debug build affordance, not a game feature.</summary>
+    private static bool ShowProbe =>
+#if DEBUG
+        true;
+#else
+        false;
+#endif
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Host.Initialise();
+    }
+}

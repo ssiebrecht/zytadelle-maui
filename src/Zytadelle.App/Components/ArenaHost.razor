@@ -1,0 +1,139 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject GameHost Host
+
+@* The canvas itself lives in index.html, outside Blazor's render tree, so no re-render can ever
+   replace it. The painters cache their gradients against that one drawing context for the whole life
+   of the app, and losing it would mean rebuilding every gradient on every frame. *@
+
+@if (_perf is { } p)
+{
+    <div class="perf-probe">
+        @p.Fps.ToString("0") fps &#183; frame @p.IntervalMedian.ToString("0.0")/@p.IntervalP95.ToString("0.0") ms &#183;
+        interop @p.LatencyMedian.ToString("0.0")/@p.LatencyP95.ToString("0.0") ms &#183;
+        draw @p.RenderMs.ToString("0.0") ms &#183; @p.Enemies pathogens &#183;
+        @p.InnerWidth.ToString("0")&#215;@p.InnerHeight.ToString("0") dpr @p.Dpr.ToString("0.##") &#183; slot @p.Slot
+    </div>
+}
+
+@code {
+    /// <summary>Set to true to show the frame-budget probe over the arena.</summary>
+    [Parameter]
+    public bool ShowProbe { get; set; }
+
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<ArenaHost>? _self;
+    private PerfReport? _perf;
+    private CancellationTokenSource? _probe;
+    private double _sentZoom = -1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _self = DotNetObjectReference.Create(this);
+        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/arena.js");
+        await _module.InvokeVoidAsync("boot", "#arena", _self, new
+        {
+            arenaRadius = ArenaBalance.ArenaRadius,
+            cellRadius = ArenaBalance.CellRadius,
+            enemyRadii = Enum.GetValues<EnemyKind>().Select(k => EnemyBalance.Def(k).Radius).ToArray(),
+        });
+        if (ShowProbe) StartProbe();
+    }
+
+    /// <summary>
+    /// One animation frame: advance the simulation and hand back the snapshot in the same round trip.
+    /// </summary>
+    [JSInvokable]
+    public byte[]? Tick(double nowMs)
+    {
+        var frame = Host.Tick(nowMs);
+        if (Math.Abs(Host.Zoom - _sentZoom) > 1e-9) PushZoom();
+        return frame;
+    }
+
+    private void PushZoom()
+    {
+        _sentZoom = Host.Zoom;
+        var module = _module;
+        if (module is null) return;
+        _ = module.InvokeVoidAsync("setZoom", _sentZoom).AsTask();
+    }
+
+    /// <summary>The dish is centred above the integrity plate, so a layout change has to re-measure.</summary>
+    public ValueTask RelayoutAsync() => _module?.InvokeVoidAsync("relayout") ?? ValueTask.CompletedTask;
+
+    private void StartProbe()
+    {
+        _probe = new CancellationTokenSource();
+        _ = PollAsync(_probe.Token);
+    }
+
+    private async Task PollAsync(CancellationToken token)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                if (_module is null) continue;
+                _perf = await _module.InvokeAsync<PerfReport?>("perfReport", token, true);
+                if (_perf is { } p) LogProbe(p);
+                StateHasChanged();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    /// <summary>Debug builds also drop the probe into a file, so it can be read without a screenshot.</summary>
+    private static void LogProbe(PerfReport p)
+    {
+        try
+        {
+            var line =
+                $"{DateTime.Now:HH:mm:ss} fps={p.Fps:0.0} frames={p.Frames} interval={p.IntervalMedian:0.0}/{p.IntervalP95:0.0}"
+                + $" interop={p.LatencyMedian:0.0}/{p.LatencyP95:0.0} draw={p.RenderMs:0.00} enemies={p.Enemies}"
+                + $" viewport={p.InnerWidth:0}x{p.InnerHeight:0} dpr={p.Dpr:0.###} slot={p.Slot}";
+            File.AppendAllLines(Path.Combine(FileSystem.AppDataDirectory, "perf.log"), [line]);
+        }
+        catch (IOException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _probe?.Cancel();
+        _probe?.Dispose();
+        if (_module is not null)
+        {
+            try
+            {
+                await _module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+        _self?.Dispose();
+    }
+
+    public sealed record PerfReport(
+        int Frames,
+        double Fps,
+        double InnerWidth,
+        double InnerHeight,
+        double Dpr,
+        string Slot,
+        int Enemies,
+        double IntervalMedian,
+        double IntervalP95,
+        double LatencyMedian,
+        double LatencyP95,
+        double RenderMs);
+}

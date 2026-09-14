@@ -1,0 +1,55 @@
+@inherits GameComponent
+
+@* Five missions a day, rerolled at local midnight; whatever is left unfinished expires. The reward
+   is a rebate on the player’s own Gene Lab investment, so it is worth collecting late. *@
+
+<div class="panel-title">
+    Missions
+    <span class="panel-hint">@Collected / @List.Count collected &#183; resets in @NumberFormat.UntilMidnight()</span>
+</div>
+
+<div class="missions @(Open > 0 ? "has-claim" : "")">
+    @for (var i = 0; i < List.Count; i++)
+    {
+        var index = i;
+        var m = List[index];
+        var text = MissionCatalog.Text(m.Id);
+        var done = m.IsDone;
+
+        <div class="mission @(m.Claimed ? "claimed" : done ? "done" : "")">
+            <div class="mission-head">
+                <span class="mission-name">@text.Label(Amount(text, m.Target))</span>
+                @if (m.Claimed)
+                {
+                    <span class="mission-claimed">Collected</span>
+                }
+                else
+                {
+                    <button class="mission-claim @(done ? "ready" : "")" type="button" disabled="@(!done)"
+                            @onclick="() => Host.ClaimMission(index)">
+                        <Icon Name="dna" />@NumberFormat.Num(MissionRoll.Reward(Host.Save, m))
+                    </button>
+                }
+            </div>
+            <div class="mission-line">
+                <span class="mission-bar"><span style="width: @Pct(m)%"></span></span>
+                <span class="mission-prog">@Amount(text, m.Progress) / @Amount(text, m.Target)</span>
+            </div>
+            <span class="mission-meta">@m.Pct.ToString("0.00", CultureInfo.InvariantCulture) % of Gene Lab investment</span>
+        </div>
+    }
+</div>
+
+@code {
+    private List<MissionSlot> List => Host.Save.Missions?.List ?? [];
+
+    private int Open => List.Count(m => !m.Claimed && m.IsDone);
+
+    private int Collected => List.Count(m => m.Claimed);
+
+    private static string Amount(MissionText text, double v) =>
+        text.Fmt == MissionFmt.Time ? NumberFormat.Time(v) : NumberFormat.Num(Math.Floor(v));
+
+    private static string Pct(MissionSlot m) =>
+        Math.Min(100, m.Progress / Math.Max(1, m.Target) * 100).ToString("0", CultureInfo.InvariantCulture);
+}

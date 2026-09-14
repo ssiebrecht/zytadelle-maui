@@ -1,0 +1,50 @@
+@inherits GameComponent
+
+@* One nav, two contents: the hub sections between cultures, the shop tabs during one. Which of the
+   two is visible is a CSS question of the shell mode, as in the browser build. *@
+
+<nav class="nav" aria-label="Main">
+    <div class="nav-items hub-only">
+        @foreach (var (view, label, icon) in Ui.HubNav)
+        {
+            var target = view;
+            <button class="nav-item @(Host.HubView == target ? "active" : "") @(Dot(target) ? "deal" : "")"
+                    data-view="@target.ToString().ToLowerInvariant()"
+                    @onclick="() => Host.ShowHubView(target)">
+                <span class="nav-ico"><Icon Name="@icon" /></span>
+                <span class="nav-label">@label</span>
+            </button>
+        }
+    </div>
+
+    <div class="nav-items run-only">
+        @foreach (var tab in Ui.Tabs)
+        {
+            var target = tab;
+            <button class="nav-item tab @(Host.ShopTab == target ? "active" : "") @(Deal(target) ? "deal" : "")"
+                    @onclick="() => SelectTab(target)">
+                <span class="nav-ico"><Icon Name="@Ui.TabIcon(target)" /></span>
+                <span class="nav-label">@Ui.TabLabel(target)</span>
+            </button>
+        }
+    </div>
+</nav>
+
+@code {
+    /// <summary>A pink dot on Missions while a reward is waiting to be collected.</summary>
+    private bool Dot(HubView view) => view == HubView.Missions && MissionRoll.ClaimableCount(Host.Save) > 0;
+
+    /// <summary>A dot on any other tab that has something affordable right now.</summary>
+    private bool Deal(GeneTab tab)
+    {
+        var w = Host.World;
+        if (w is null || tab == Host.ShopTab) return false;
+        return UpgradeCatalog.InTab(tab).Select(def => Purchase.Offer(w, def.Id)).Any(o => o.Visible && o.Affordable);
+    }
+
+    private void SelectTab(GeneTab tab)
+    {
+        Host.ShopTab = tab;
+        Host.Announce();
+    }
+}

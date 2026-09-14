@@ -1,0 +1,10 @@
+@* One icon out of the sprite in index.html. *@
+<svg class="@Class" aria-hidden="true"><use href="#ico-@Name" /></svg>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = "";
+
+    [Parameter]
+    public string Class { get; set; } = "ico";
+}

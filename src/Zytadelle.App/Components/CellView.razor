@@ -1,0 +1,78 @@
+@inherits GameComponent
+
+@* Pick an infection and start. Exactly one primary action on this screen, and it sits in the thumb
+   zone; a locked infection shows how far the one before it has come. *@
+
+<div class="panel-title">
+    Culture
+    <span class="panel-hint">@Host.Save.TotalRuns @(Host.Save.TotalRuns == 1 ? "culture" : "cultures") &#183; best C@(Best)</span>
+</div>
+
+<div class="infection-list">
+    @foreach (var t in InfectionBalance.All)
+    {
+        var infection = t.Infection;
+        var unlocked = InfectionBalance.IsUnlocked(infection, Host.Save.BestCycle);
+        var best = Host.Save.Best(infection);
+        var prevBest = Host.Save.Best(infection - 1);
+        var reachable = InfectionBalance.IsUnlocked(infection - 1, Host.Save.BestCycle);
+
+        <button type="button"
+                class="infection @(infection == Host.Save.SelectedInfection ? "active" : "") @(unlocked ? "" : "locked")"
+                title="@(unlocked
+                          ? $"{t.Name} · best cycle {best} · DNA ×{t.DnaMult}"
+                          : $"Reach cycle {InfectionBalance.UnlockCycle} on Infection {infection - 1}")"
+                @onclick="() => Host.SelectInfection(infection)">
+            <span class="infection-num">@infection</span>
+            <span class="infection-meta">
+                @if (unlocked)
+                {
+                    <text>Best C</text>@best
+                }
+                else
+                {
+                    <Icon Name="lock" />
+                    <text>@(reachable ? $"{prevBest} / {InfectionBalance.UnlockCycle}" : $"C{InfectionBalance.UnlockCycle}")</text>
+                }
+            </span>
+            @if (!unlocked)
+            {
+                <span class="infection-prog">
+                    @if (reachable && prevBest > 0)
+                    {
+                        <span style="width: @Pct(prevBest)%"></span>
+                    }
+                </span>
+            }
+        </button>
+    }
+</div>
+
+<div class="hub-stats">
+    <div class="stat"><span class="stat-k">DNA bonus</span><span class="stat-v dna">&#215;@Fmt1(Selected.DnaMult)</span></div>
+    <div class="stat"><span class="stat-k">enemy HP</span><span class="stat-v">&#215;@Fmt(Selected.HpMult)</span></div>
+    <div class="stat"><span class="stat-k">enemy DMG</span><span class="stat-v">&#215;@Fmt(Selected.AtkMult)</span></div>
+</div>
+
+<div class="sheet-spacer"></div>
+
+<button class="btn-start" @onclick="() => Host.StartRun(Host.Save.SelectedInfection)">
+    <span class="btn-start-text">
+        <span class="btn-start-title">Start culture</span>
+        <span class="btn-start-sub">@Selected.Name &#183; &#215;@Fmt1(Selected.DnaMult) DNA &#183; best C@(Best)</span>
+    </span>
+    <span class="btn-start-ico"><Icon Name="play" /></span>
+</button>
+
+@code {
+    private InfectionDef Selected => InfectionBalance.Def(Host.Save.SelectedInfection);
+
+    private int Best => Host.Save.Best(Host.Save.SelectedInfection);
+
+    private static string Fmt1(double v) => v.ToString("0.0", CultureInfo.InvariantCulture);
+
+    private static string Fmt(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static string Pct(int prevBest) =>
+        Math.Min(100, prevBest * 100.0 / InfectionBalance.UnlockCycle).ToString("0", CultureInfo.InvariantCulture);
+}

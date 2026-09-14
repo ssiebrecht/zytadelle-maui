@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Zytadelle.App/Zytadelle.App.csproj" />
+    <Project Path="src/Zytadelle.Balancing/Zytadelle.Balancing.csproj" />
+    <Project Path="src/Zytadelle.Core/Zytadelle.Core.csproj" />
+    <Project Path="src/Zytadelle.Lab.Engine/Zytadelle.Lab.Engine.csproj" />
+    <Project Path="src/Zytadelle.Lab/Zytadelle.Lab.csproj" />
+  </Folder>
+</Solution>

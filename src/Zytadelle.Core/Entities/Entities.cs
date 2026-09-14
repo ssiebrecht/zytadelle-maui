@@ -1,0 +1,108 @@
+using Zytadelle.Balancing;
+
+namespace Zytadelle.Core.Entities;
+
+/// <summary>
+/// One pathogen. Positions are metres with the cell at the origin, so the distance to the cell is
+/// just the length of (X, Y).
+/// </summary>
+public sealed class Enemy
+{
+    /// <summary>
+    /// Identity, and at the same time the renderer's decoration seed: flagella lengths, granule
+    /// layout and septum placement are hashed from it. Never renumber a living pathogen or its
+    /// anatomy will flicker.
+    /// </summary>
+    public required int Id { get; init; }
+
+    public required EnemyKind Kind { get; init; }
+
+    public required EnemyDef Def { get; init; }
+
+    public double X;
+    public double Y;
+    public double Hp;
+    public double MaxHp;
+    public double Atk;
+    public double Speed;
+    public double Radius;
+
+    /// <summary>The cycle it spawned in; drives the decay on its DNA drop.</summary>
+    public int SpawnCycle;
+
+    /// <summary>Heat-up multiplier on the damage it deals. Starts at 1 and never resets.</summary>
+    public double DmgMult = 1;
+
+    public double AttackCd;
+
+    /// <summary>Reached its stop distance. A shooting pathogen starts its windup here.</summary>
+    public bool Arrived;
+
+    public bool Alive = true;
+
+    /// <summary>Seconds of hit flash left. Render only.</summary>
+    public double Flash;
+}
+
+/// <summary>A toxin from the cell or a shot at it.</summary>
+public sealed class Projectile
+{
+    public required int Id { get; init; }
+
+    public double X;
+    public double Y;
+    public double Vx;
+    public double Vy;
+    public double Speed;
+    public double Dmg;
+    public bool Crit;
+    public bool FromCell;
+
+    /// <summary>Toxins from the cell home onto a pathogen; shots at the cell fly straight.</summary>
+    public Enemy? Target;
+
+    /// <summary>Diffusion hops left. 0 means the toxin stops on its target.</summary>
+    public int Bounces;
+
+    /// <summary>Pathogens this toxin already hit - it never diffuses back into one of them.</summary>
+    public List<int>? Hit;
+
+    /// <summary>Hops taken so far. A rupture counts once per toxin, not once per hop.</summary>
+    public int Hops;
+
+    public double Life;
+    public bool Alive = true;
+}
+
+/// <summary>The player's macrophage.</summary>
+public sealed class Cell
+{
+    public double Hp;
+    public double MaxHp;
+    public double FireCd;
+    public double Flash;
+}
+
+public enum FxKind
+{
+    Kill,
+    Crit,
+    BossKill,
+    Hit,
+    Atp,
+}
+
+/// <summary>A transient render effect. Aged by the simulation, drawn by the renderer.</summary>
+public sealed class FxEvent
+{
+    public required FxKind Kind { get; init; }
+
+    public required double X { get; init; }
+
+    public required double Y { get; init; }
+
+    public double Value { get; init; }
+
+    /// <summary>Age in seconds.</summary>
+    public double T;
+}

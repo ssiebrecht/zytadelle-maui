@@ -1,0 +1,75 @@
+@inherits GameComponent
+
+<div class="panel-title">Records <span class="panel-hint">every culture counts</span></div>
+
+<div class="records">
+    <div class="record-stats">
+        <div><span class="stat-k">Cultures</span><span class="stat-v">@Host.Save.TotalRuns</span></div>
+        <div>
+            <span class="stat-k">DNA total</span>
+            <span class="stat-v dna"><Icon Name="dna" />@NumberFormat.Num(Math.Floor(Host.Save.TotalDna))</span>
+        </div>
+        <div><span class="stat-k">Best cycle</span><span class="stat-v best">@Host.Save.BestOverall()</span></div>
+        <div>
+            <span class="stat-k">Genes unlocked</span>
+            <span class="stat-v">
+                @(Host.Save.Unlocked.Count + UpgradeCatalog.FreeGeneCount)<span class="stat-sub"> / @UpgradeCatalog.All.Count</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="record-list">
+        @foreach (var t in InfectionBalance.All)
+        {
+            var unlocked = InfectionBalance.IsUnlocked(t.Infection, Host.Save.BestCycle);
+            var best = Host.Save.Best(t.Infection);
+            var prevBest = Host.Save.Best(t.Infection - 1);
+            var reachable = InfectionBalance.IsUnlocked(t.Infection - 1, Host.Save.BestCycle);
+            var gate = $"Reach cycle {InfectionBalance.UnlockCycle} on Infection {t.Infection - 1} · DNA ×{Fmt1(t.DnaMult)}";
+
+            if (unlocked)
+            {
+                <div class="record">
+                    <span class="record-num">@t.Infection</span>
+                    <span class="record-body">
+                        <span class="record-name">@t.Name</span>
+                        <span class="record-meta">DNA &#215;@Fmt1(t.DnaMult) &#183; HP &#215;@Fmt(t.HpMult) &#183; DMG &#215;@Fmt(t.AtkMult)</span>
+                    </span>
+                    <span class="record-best"><span class="record-best-val">C@(best)</span><span class="record-best-k">best</span></span>
+                </div>
+            }
+            else if (!reachable)
+            {
+                <div class="record locked far">
+                    <span class="record-num">@t.Infection</span>
+                    <span class="record-body"><span class="record-name">@t.Name</span><span class="record-meta">@gate</span></span>
+                    <Icon Name="lock" Class="ico record-lock" />
+                </div>
+            }
+            else
+            {
+                <div class="record locked next">
+                    <span class="record-num">@t.Infection</span>
+                    <span class="record-body">
+                        <span class="record-line">
+                            <span class="record-name">@t.Name</span>
+                            <span class="record-prog-val">@prevBest / @InfectionBalance.UnlockCycle</span>
+                        </span>
+                        <span class="record-bar"><span style="width: @Pct(prevBest)%"></span></span>
+                        <span class="record-meta">@gate</span>
+                    </span>
+                    <Icon Name="lock" Class="ico record-lock" />
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private static string Fmt1(double v) => v.ToString("0.0", CultureInfo.InvariantCulture);
+
+    private static string Fmt(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static string Pct(int prevBest) =>
+        Math.Min(100, prevBest * 100.0 / InfectionBalance.UnlockCycle).ToString("0", CultureInfo.InvariantCulture);
+}

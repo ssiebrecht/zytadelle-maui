@@ -1,0 +1,84 @@
+@inherits LabComponent
+@inject IJSRuntime JS
+
+@* How a session ends. The browser build could load a tuning set straight into the game; this one
+   reads its balance from compiled fields, so a number that stays in the Lab is a number nobody gets
+   to play. What leaves here is a list of what moved and the C# that moves it. *@
+
+@{
+    var changes = Host.Diff();
+}
+
+<details class="tgroup" open="@(changes.Count > 0)">
+    <summary>
+        <span class="tgroup-title">Changed values</span>
+        <span class="tgroup-count @(changes.Count > 0 ? "is-on" : null)">@(changes.Count > 0 ? changes.Count.ToString() : null)</span>
+        @if (changes.Count > 0)
+        {
+            <button type="button" class="tgroup-reset" @onclick:stopPropagation @onclick="CopyCSharp">@_label</button>
+        }
+    </summary>
+
+    @if (changes.Count == 0)
+    {
+        <p class="tgroup-note">Nothing changed - the session is on the shipped balance.</p>
+    }
+    else
+    {
+        <p class="tgroup-note">
+            Copy takes the C# for these. A simple property comes out as a statement; a value inside a
+            curve, a bracket or the gene table comes out commented, because it has to be written where
+            that curve is declared rather than assigned at runtime.
+        </p>
+        <table class="ltable">
+            <thead>
+            <tr>
+                <th>Path</th>
+                <th>Shipped</th>
+                <th>Now</th>
+                <th>&#215;</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var c in changes)
+            {
+                <tr @key="c.Path">
+                    <td title="@c.Path">@Short(c.Path)</td>
+                    <td class="num">@TuningDiff.Literal(c.Shipped)</td>
+                    <td class="num strong">@TuningDiff.Literal(c.Tuned)</td>
+                    <td class="num">@Factor(c)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</details>
+
+@code {
+    private string _label = "copy C#";
+
+    private static string Short(string path) => path.Length <= 46 ? path : "…" + path[^45..];
+
+    private static string Factor(TuningChange c) =>
+        double.IsNaN(c.Factor) || double.IsInfinity(c.Factor)
+            ? "—"
+            : c.Factor.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private async Task CopyCSharp()
+    {
+        try
+        {
+            var ok = await JS.InvokeAsync<bool>("labClipboard.write", Host.ExportCSharp());
+            _label = ok ? "copied" : "blocked";
+        }
+        catch (JSException)
+        {
+            _label = "blocked";
+        }
+
+        StateHasChanged();
+        await Task.Delay(1200);
+        _label = "copy C#";
+        StateHasChanged();
+    }
+}

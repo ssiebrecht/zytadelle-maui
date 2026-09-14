@@ -1,0 +1,56 @@
+@inherits GameComponent
+
+@* The in-culture shop. Prices here follow the levels bought during this culture, not the Gene Lab
+   level, so the two half-price opening levels are granted again inside every culture. *@
+
+<div class="panel-title">
+    <span>@Ui.TabLabel(Host.ShopTab)</span>
+    <span class="panel-hint rate-atp"><Icon Name="atp" />@RateText</span>
+</div>
+
+<div class="list">
+    @{ var index = 0; }
+    @foreach (var def in UpgradeCatalog.InTab(Host.ShopTab))
+    {
+        var offer = Offer(def);
+        if (!offer.Visible) { continue; }
+        var i = index++;
+        var id = def.Id;
+        <UpgradeCard @key="(id, Bought(id))"
+                     Def="def"
+                     Index="i"
+                     Level="offer.Level"
+                     Maxed="offer.Cost is null"
+                     Cost="offer.Cost ?? 0"
+                     Affordable="offer.Affordable"
+                     Currency="atp"
+                     Current="@NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, offer.Level))"
+                     Next="@NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, offer.Level + 1))"
+                     Flash="_lastBought == id"
+                     OnClick="() => Buy(id)" />
+    }
+</div>
+
+@code {
+    // A purchase bumps the card key, which recreates the element - that is what restarts the flash.
+    private readonly Dictionary<UpgradeId, int> _buys = [];
+    private UpgradeId? _lastBought;
+
+    private int Bought(UpgradeId id) => _buys.GetValueOrDefault(id);
+
+    private RunOffer Offer(UpgradeDef def) => Host.World is null
+        ? new RunOffer(def, 0, null, false, false)
+        : Purchase.Offer(Host.World, def.Id);
+
+    private string RateText => Host.World is null
+        ? ""
+        : $"+{NumberFormat.Num(Step.PerMinute(Host.World.AtpWindow))} / min";
+
+    private void Buy(UpgradeId id)
+    {
+        if (Host.BuyRun(id) != BuyResult.Bought) { return; }
+        _buys[id] = Bought(id) + 1;
+        _lastBought = id;
+        StateHasChanged();
+    }
+}

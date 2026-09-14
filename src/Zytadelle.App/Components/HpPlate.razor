@@ -1,0 +1,29 @@
+@inherits GameComponent
+
+@* Integrity floats over the dish rather than sitting beside it; arena.js measures this plate and
+   keeps the dish centred above it, so the reticle ring is never covered. *@
+
+<div class="hp-plate run-only @(Low ? "low" : "")">
+    <div class="hp-head">
+        <span class="hp-label"><Icon Name="health" />Membrane</span>
+        <span class="hp-text">@NumberFormat.Num(Hp) / @NumberFormat.Num(MaxHp)</span>
+    </div>
+    <div class="hp-bar"><div class="hp-fill" style="width: @Pct%"></div></div>
+</div>
+
+@code {
+    private double Hp => Host.World?.Cell.Hp ?? 0;
+
+    private double MaxHp => Math.Max(1, Host.World?.Cell.MaxHp ?? 1);
+
+    private double Frac => Math.Clamp(Hp / MaxHp, 0, 1);
+
+    /// <summary>
+    /// Display threshold only: below this the plate turns red and the field picks up a danger pulse.
+    /// It changes how the state looks, never what the state is, so it is not a balance value - and the
+    /// renderer keeps its own copy of it for the pulse.
+    /// </summary>
+    private bool Low => Frac < 0.3;
+
+    private string Pct => (Frac * 100).ToString("0.##", CultureInfo.InvariantCulture);
+}

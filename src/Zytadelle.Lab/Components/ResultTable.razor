@@ -1,0 +1,147 @@
+@inherits LabComponent
+
+@if (Host.Results.Count == 0)
+{
+    <div class="results">
+        <p class="pane-note">
+            @(Host.Busy ? "Searching..." : "No search has run yet.")
+        </p>
+    </div>
+}
+else
+{
+    <div class="results">
+        <table class="rtable">
+            <thead>
+            <tr>
+                <th></th>
+                <th>#</th>
+                <th>Build</th>
+                <th title="Simulated time spent inside cultures. Divide by the speed for real time.">Time to target <small>sim</small></th>
+                <th>vs best</th>
+                <th>Reached</th>
+                <th>Best cycle</th>
+                <th>Cultures</th>
+                <th>Leans on</th>
+            </tr>
+            </thead>
+            <tbody>
+            @for (var i = 0; i < Host.Results.Count; i++)
+            {
+                var index = i;
+                var f = Host.Results[i];
+                <tr class="rrow @(Host.Selected == index ? "is-on" : null)" @key="index" @onclick="() => Host.Select(index)">
+                    <td><span class="swatch" style="background: @Colour(index)"></span></td>
+                    <td>@(index + 1)</td>
+                    <td>@(f.Label is { } label ? (MarkupString)$"<em>{label}</em>" : (MarkupString)$"build {index + 1}")</td>
+                    <td class="num">
+                        @if (f.ReachedFraction > 0)
+                        {
+                            @Hours(f.Score)
+                            @if (f.ReachedFraction < 1)
+                            {
+                                <span class="partial" title="Some campaigns never reached the target; this blends them in as a penalty, so it is not a clean time.">*</span>
+                            }
+                            <span class="se">&#177; @((f.StandardError / 3600).ToString("F2", CultureInfo.InvariantCulture))</span>
+                        }
+                        else
+                        {
+                            <text>&mdash;</text>
+                        }
+                    </td>
+                    <td class="num">@Delta(index, f)</td>
+                    <td class="num">@((f.ReachedFraction * 100).ToString("F0", CultureInfo.InvariantCulture)) %</td>
+                    <td class="num">@f.MeanBestCycle.ToString("F1", CultureInfo.InvariantCulture)</td>
+                    <td class="num">@f.MeanRuns.ToString("F1", CultureInfo.InvariantCulture)</td>
+                    <td class="lean">@LeansOn(f)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <p class="pane-note">
+            Scored on @Host.FinalSeeds held-out campaign seeds that took no part in the search. A time
+            marked * blends in campaigns that never reached the target, so it is a ranking figure, not a
+            clean time. Italic rows are fixed reference builds, carried through whether or not the search
+            kept them. Campaign hours are simulated time spent inside cultures; at &#215;@Host.Speed one
+            simulated hour is @((60.0 / Math.Max(1, Host.Speed)).ToString("F0", CultureInfo.InvariantCulture)) real minutes.
+        </p>
+    </div>
+
+    <div class="charts">
+        <figure class="chartbox">
+            <figcaption>Campaign time to each new best cycle</figcaption>
+            <Chart Id="chart-time" Series="@LadderSeries()" XLabel="best cycle" YLabel="campaign hours" Step="true" />
+        </figure>
+        <figure class="chartbox">
+            <figcaption>ATP / min per cycle <small>deepest culture</small></figcaption>
+            <Chart Id="chart-atp" Series="@RateSeries(c => c.Atp)" XLabel="cycle" YLabel="ATP / min" />
+        </figure>
+        <figure class="chartbox">
+            <figcaption>DNA / min per cycle <small>deepest culture</small></figcaption>
+            <Chart Id="chart-dna" Series="@RateSeries(c => c.Dna)" XLabel="cycle" YLabel="DNA / min" />
+        </figure>
+    </div>
+
+    <BuildDetail />
+}
+
+@code {
+    /// <summary>Ten lines have to stay apart on a dark ground; references reuse the palette dashed.</summary>
+    public static readonly string[] Colours =
+    [
+        "#6ff2e2", "#ffc85c", "#e88ab8", "#7dff9a", "#b48cff",
+        "#ff8f5c", "#5cc8ff", "#ff5470", "#9fe36b", "#d9a3ff",
+        "#f0f5f4", "#78d6c0", "#ffb3d1",
+    ];
+
+    public static string Colour(int i) => Colours[i % Colours.Length];
+
+    private object[] LadderSeries() =>
+        [.. Host.Results.Select((f, i) => new
+        {
+            id = i,
+            label = f.Label ?? $"build {i + 1}",
+            color = Colour(i),
+            dashed = f.Label is not null,
+            points = (f.Detail?.Ladder ?? []).Select(m => new { x = (double)m.Cycle, y = m.Seconds / 3600 }).ToArray(),
+        })];
+
+    private object[] RateSeries(Func<CycleSample, double> value) =>
+        [.. Host.Results.Select((f, i) => new
+        {
+            id = i,
+            label = f.Label ?? $"build {i + 1}",
+            color = Colour(i),
+            dashed = f.Label is not null,
+            points = (f.Detail?.BestRun?.Cycles ?? [])
+                .Where(c => c.Cycle >= Host.ChartFrom && c.Cycle <= Host.TargetCycle && c.Seconds > 0)
+                .Select(c => new { x = (double)c.Cycle, y = value(c) / (c.Seconds / 60) })
+                .ToArray(),
+        })];
+
+    private string Delta(int index, Finalist f)
+    {
+        if (index == 0) { return "—"; }
+        var best = Host.Results[0].Score;
+        if (f.ReachedFraction <= 0 || best <= 0) { return "—"; }
+        return $"{((f.Score - best) / best * 100).ToString("F0", CultureInfo.InvariantCulture)} %";
+    }
+
+    private static string Hours(double seconds)
+    {
+        var h = seconds / 3600;
+        return h >= 10
+            ? $"{h.ToString("F0", CultureInfo.InvariantCulture)} h"
+            : $"{h.ToString("F1", CultureInfo.InvariantCulture)} h";
+    }
+
+    /// <summary>The three genes a build puts its DNA into, relative to a flat build.</summary>
+    private static string LeansOn(Finalist f) =>
+        string.Join(", ", UpgradeIds.All
+            .Select(id => (Id: id, Weight: f.Strategy.Lab(id)))
+            .OrderByDescending(x => x.Weight)
+            .Take(3)
+            .Where(x => x.Weight > 1.05)
+            .Select(x => $"{UpgradeCatalog.Def(x.Id).Name} ×{x.Weight.ToString("F1", CultureInfo.InvariantCulture)}"));
+}

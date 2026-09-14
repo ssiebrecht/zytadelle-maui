@@ -1,0 +1,91 @@
+@inherits GameComponent
+
+@* The culture ended. The arena keeps drawing the breach behind this sheet, which is why the world is
+   not thrown away until the next one starts. *@
+
+<section class="results">
+    <div class="results-card">
+        <div class="sheet-grab" aria-hidden="true"></div>
+
+        <div class="results-top">
+            <span class="results-kicker"><Icon Name="breach" />Membrane breached</span>
+            <span class="results-sub">@Inf.Name &#183; @NumberFormat.Time(Sum.Time)</span>
+        </div>
+
+        <div class="results-cycle">
+            <span class="results-cycle-block">
+                <span class="cur-label">Cycle reached</span>
+                <span class="cycle-big">@Sum.Cycle</span>
+            </span>
+            <span class="results-best">
+                @if (Result.IsRecord)
+                {
+                    <span class="record-new">New best</span>
+                    @if (Result.PrevBest > 0)
+                    {
+                        <span class="record-delta">+@(Sum.Cycle - Result.PrevBest) over C@(Result.PrevBest)</span>
+                    }
+                }
+                else
+                {
+                    <span class="record-old">best C@(Best)</span>
+                }
+            </span>
+        </div>
+
+        <div class="results-dna">
+            <span class="results-dna-copy">
+                <span class="cur-label">DNA earned</span>
+                <span class="results-dna-note">
+                    @NumberFormat.Num(Sum.Kills) lysed &#183; &#215;@Inf.DnaMult.ToString("0.0", CultureInfo.InvariantCulture) infection bonus
+                </span>
+            </span>
+            <span class="dna-val big"><Icon Name="dna" /><span>+@NumberFormat.Num(Sum.Dna)</span></span>
+        </div>
+
+        @if (Next is { } next && Best < InfectionBalance.UnlockCycle)
+        {
+            <div class="results-unlock">
+                <div class="results-unlock-head">
+                    <span class="results-unlock-label">
+                        <Icon Name="lock" />@next.Name unlocks at cycle @InfectionBalance.UnlockCycle
+                    </span>
+                    <span class="results-unlock-val">@Best / @InfectionBalance.UnlockCycle</span>
+                </div>
+                <div class="results-unlock-bar"><span style="width: @UnlockPct%"></span></div>
+            </div>
+        }
+
+        <dl class="results-grid">
+            <div><dt>Lysed</dt><dd>@NumberFormat.Num(Sum.Kills)</dd></div>
+            <div><dt>ATP earned</dt><dd class="atp"><Icon Name="atp" />@NumberFormat.Num(Sum.AtpEarned)</dd></div>
+            <div><dt>Duration</dt><dd>@NumberFormat.Time(Sum.Time)</dd></div>
+        </dl>
+
+        <div class="results-actions">
+            <button class="btn btn-ghost" @onclick="() => Host.ShowHub(HubView.Genome)">
+                <Icon Name="dna" />Gene Lab
+            </button>
+            <button class="btn btn-primary" @onclick="() => Host.Retry()">
+                <Icon Name="play" />New culture
+            </button>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public RunResult Result { get; set; } = null!;
+
+    private RunSummary Sum => Result.Summary;
+
+    private InfectionDef Inf => InfectionBalance.Def(Result.Infection);
+
+    private int Best => Math.Max(Result.PrevBest, Sum.Cycle);
+
+    private InfectionDef? Next =>
+        InfectionBalance.All.FirstOrDefault(t => t.Infection == Result.Infection + 1);
+
+    private string UnlockPct =>
+        Math.Min(100, Best * 100.0 / InfectionBalance.UnlockCycle).ToString("0", CultureInfo.InvariantCulture);
+}

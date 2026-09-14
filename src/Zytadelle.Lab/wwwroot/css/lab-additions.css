@@ -1,0 +1,166 @@
+/* ===== What the .NET Lab adds to the browser build's stylesheet =====
+   lab.css came across from ../tower-claude/src/tools/balance/style.css unchanged, so every class
+   the ported markup uses is already dressed. This file holds only what is new here: the Blazor
+   mount point, the ladder table that answers the question this tool exists for, the grid budget
+   meter, and the two small controls the browser version did not have. */
+
+/* Blazor mounts into a div rather than straight into the body, so the mount point has to disappear
+   as far as layout is concerned. */
+#ui-layer {
+  display: contents;
+}
+
+/* ---------- mode switch ---------- */
+
+.modes {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.modes .btn {
+  flex: 1;
+}
+
+.btn.is-on {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(111, 242, 226, 0.08);
+}
+
+/* ---------- the filter over five hundred fields ---------- */
+
+.trow-filter {
+  margin-bottom: 10px;
+}
+
+.trow-filter input[type='text'] {
+  flex: 1;
+  min-width: 0;
+  background: var(--sunk);
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  color: var(--text);
+  font: 600 12px var(--font-body);
+  padding: 5px 8px;
+}
+
+.trow-filter input[type='text']:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+/* ---------- the ladder: cycle, cultures, minutes ---------- */
+
+.ltable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 10px;
+  font-size: 12px;
+}
+
+.ltable th {
+  text-align: right;
+  font-weight: 700;
+  color: var(--text-mute);
+  border-bottom: 1px solid var(--line);
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
+.ltable th:first-child {
+  text-align: left;
+}
+
+.ltable td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.ltable td.num {
+  text-align: right;
+}
+
+/* The deltas are the answer; the cumulative columns are only there for scale. */
+.ltable td.strong {
+  color: var(--cyan);
+  font-weight: 800;
+}
+
+.ltable tbody tr:hover td {
+  background: rgba(111, 242, 226, 0.05);
+}
+
+/* ---------- the grid budget meter ---------- */
+
+.meter {
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--text-mute);
+  border-radius: 8px;
+  background: var(--sunk);
+  padding: 9px 12px;
+  margin: 10px 0;
+}
+
+.meter-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 12.5px;
+}
+
+.meter-head b {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.meter-head span {
+  color: var(--text-dim);
+}
+
+.meter-note {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  color: var(--text-mute);
+  line-height: 1.5;
+}
+
+.meter-note strong {
+  color: var(--text);
+}
+
+.meter-cool {
+  border-left-color: var(--atp);
+}
+
+.meter-warm {
+  border-left-color: var(--dna);
+}
+
+.meter-hot {
+  border-left-color: #ff8f5c;
+}
+
+.meter-hot .meter-note strong {
+  color: #ff8f5c;
+}
+
+.meter-stop {
+  border-left-color: var(--danger);
+}
+
+.meter-stop .meter-note strong {
+  color: var(--danger);
+}
+
+/* ---------- chart header ---------- */
+
+.chart-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -18px;
+  position: relative;
+  z-index: 1;
+}

@@ -1,0 +1,53 @@
+@inherits LabComponent
+
+@* The budget, live, while genes are being ticked. Ticking the seventh gene visibly quadruples the
+   bar, and that is the point: the cost of the grid has to be visible before the click that spends it,
+   not after. The clock is only shown once campaigns have actually been timed - a guessed rate would
+   be most wrong exactly when someone is about to start a run that takes days. *@
+
+@{
+    var cfg = Host.Config();
+    var plan = Host.CampaignsPerSecond > 0 ? GridSearch.Plan(cfg, Host.CampaignsPerSecond) : GridSearch.Plan(cfg, 0);
+    var timed = Host.CampaignsPerSecond > 0 && plan.Estimate != TimeSpan.MaxValue;
+    var hours = timed ? plan.Estimate.TotalHours : 0;
+    var level = !timed ? "unknown" : hours > 24 ? "stop" : hours > 2 ? "hot" : hours > 0.5 ? "warm" : "cool";
+}
+
+<div class="meter meter-@level">
+    <div class="meter-head">
+        <b>@Plural(plan.Candidates, "build")</b>
+        <span>&#183; @plan.Campaigns.ToString("N0", CultureInfo.InvariantCulture) campaigns</span>
+        @if (timed)
+        {
+            <span>&#183; <b>&#8776; @Human(plan.Estimate)</b> on @cfg.WorkerCount workers</span>
+        }
+        else
+        {
+            <span>&#183; press <em>Time it first</em> for a clock</span>
+        }
+    </div>
+    <p class="meter-note">
+        @cfg.Genes.Count gene(s) &#215; @cfg.Levels.Count levels = @plan.Raw.ToString("N0", CultureInfo.InvariantCulture) vectors@(plan.DedupApplied ? ", less the ones that are a multiple of another" : string.Empty),
+        each with the gate on and off.
+        @if (timed && hours > 24)
+        {
+            <strong> That is past a day. Untick genes, drop a weight level, or lower the target cycle.</strong>
+        }
+        else if (timed && hours > 2)
+        {
+            <strong> Over two hours - worth a smaller screen first.</strong>
+        }
+    </p>
+</div>
+
+@code {
+    private static string Plural(long n, string word) =>
+        $"{n.ToString("N0", CultureInfo.InvariantCulture)} {word}{(n == 1 ? string.Empty : "s")}";
+
+    private static string Human(TimeSpan t) =>
+        t.TotalDays >= 365 ? $"{t.TotalDays / 365:N0} years"
+        : t.TotalDays >= 1 ? $"{t.TotalDays:F1} d"
+        : t.TotalHours >= 1 ? $"{t.TotalHours:F1} h"
+        : t.TotalMinutes >= 1 ? $"{t.TotalMinutes:F0} min"
+        : $"{t.TotalSeconds:F0} s";
+}

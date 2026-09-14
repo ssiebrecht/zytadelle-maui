@@ -1,0 +1,101 @@
+@inherits LabComponent
+@inject IJSRuntime JS
+
+@* The three panes of the browser build's Balance Lab, in the same order and under the same class
+   names, so its stylesheet came across unchanged: what the numbers are, what to search, what came
+   back. *@
+
+<header class="top">
+    <h1>Balance Lab</h1>
+    <span class="top-sub">every constant in the game, and a search for the build that gets there fastest</span>
+    <div class="top-actions">
+        <button type="button" class="btn" disabled="@Host.Busy" @onclick="Copy">@_copyLabel</button>
+        <button type="button" class="btn" disabled="@Host.Busy" @onclick="Paste">@_pasteLabel</button>
+        <button type="button" class="btn" disabled="@Host.Busy" @onclick="() => Host.ResetTuning()">Reset all</button>
+    </div>
+</header>
+
+<main class="grid">
+    <section class="pane">
+        <h2>Tuning</h2>
+        <p class="pane-note">
+            Every number the simulation runs on, read straight out of <code>Zytadelle.Balancing</code>.
+            @Host.Fields.Count fields in @Host.Fields.DistinctBy(f => f.Group).Count() groups.
+            Nothing here touches the game or your save.
+        </p>
+        @if (Host.TuningNote is { Length: > 0 } note)
+        {
+            <p class="pane-note">@note</p>
+        }
+        <TuningForm />
+        <ExportPanel />
+    </section>
+
+    <section class="pane">
+        <h2>Search</h2>
+        <p class="pane-note">
+            A campaign is: run, die, bank the DNA, spend it in the Gene Lab, run again - until one
+            culture reaches the target cycle. Builds are ranked on how much simulated time that takes.
+        </p>
+        <SearchForm />
+    </section>
+
+    <section class="pane pane-wide">
+        <h2>Results</h2>
+        <ResultTable />
+    </section>
+</main>
+
+@code {
+    private string _copyLabel = "Copy tuning";
+    private string _pasteLabel = "Paste tuning";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Host.Initialise();
+    }
+
+    private async Task Copy()
+    {
+        var ok = await Clipboard<bool>("labClipboard.write", Host.TuningJson());
+        _copyLabel = ok ? "Copied" : "Blocked";
+        await Flash(() => _copyLabel = "Copy tuning");
+    }
+
+    private async Task Paste()
+    {
+        var text = await Clipboard<string?>("labClipboard.read");
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _pasteLabel = "Nothing there";
+        }
+        else
+        {
+            Host.LoadTuningJson(text);
+            _pasteLabel = "Loaded";
+        }
+
+        await Flash(() => _pasteLabel = "Paste tuning");
+    }
+
+    private async Task<T?> Clipboard<T>(string fn, params object?[] args)
+    {
+        try
+        {
+            return await JS.InvokeAsync<T>(fn, args);
+        }
+        catch (JSException)
+        {
+            return default;
+        }
+    }
+
+    private async Task Flash(Action restore)
+    {
+        StateHasChanged();
+        await Task.Delay(1200);
+        restore();
+        StateHasChanged();
+    }
+}

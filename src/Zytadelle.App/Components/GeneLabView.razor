@@ -1,0 +1,67 @@
+@inherits GameComponent
+
+@* The Gene Lab: permanent starting levels bought with DNA. A locked gene shows what it does and its
+   unlock price instead of a level. *@
+
+<div class="panel-title">
+    Gene Lab
+    <span class="panel-hint">permanent start levels &#183; @UnlockedCount/@UpgradeCatalog.All.Count genes</span>
+</div>
+
+<nav class="tabs">
+    @foreach (var tab in Ui.Tabs)
+    {
+        var target = tab;
+        <button class="tab @(Host.LabTab == target ? "active" : "")" @onclick="() => SelectTab(target)">
+            <Icon Name="@Ui.TabIcon(target)" />@Ui.TabLabel(target)
+        </button>
+    }
+</nav>
+
+<div class="list">
+    @{ var index = 0; }
+    @foreach (var def in UpgradeCatalog.InTab(Host.LabTab))
+    {
+        var action = LabPurchase.Action(Host.Save, def.Id);
+        var i = index++;
+        var id = def.Id;
+        var locked = action.Kind == LabActionKind.Unlock;
+        var maxed = action.Kind == LabActionKind.Maxed;
+        <UpgradeCard @key="(id, Bought(id))"
+                     Def="def"
+                     Index="i"
+                     Level="action.Level"
+                     Locked="locked"
+                     Maxed="maxed"
+                     Cost="action.Cost"
+                     Affordable="Host.Save.Dna >= action.Cost"
+                     Currency="dna"
+                     Current="@(locked ? def.Desc : NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, action.Level)))"
+                     Next="@NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, action.Level + 1))"
+                     Flash="_lastBought == id"
+                     OnClick="() => Buy(id)" />
+    }
+</div>
+
+@code {
+    private readonly Dictionary<UpgradeId, int> _buys = [];
+    private UpgradeId? _lastBought;
+
+    private int Bought(UpgradeId id) => _buys.GetValueOrDefault(id);
+
+    private int UnlockedCount => Host.Save.Unlocked.Count + UpgradeCatalog.FreeGeneCount;
+
+    private void SelectTab(GeneTab tab)
+    {
+        Host.LabTab = tab;
+        Host.Announce();
+    }
+
+    private void Buy(UpgradeId id)
+    {
+        if (Host.BuyLab(id) is not (LabResult.Bought or LabResult.Unlocked)) { return; }
+        _buys[id] = Bought(id) + 1;
+        _lastBought = id;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,187 @@
+@inherits LabComponent
+
+<div class="sgrid">
+    <label class="srow"><span>Infection</span>
+        <select value="@Host.Infection" disabled="@Host.Busy" @onchange="e => Host.Infection = Int(e, Host.Infection)">
+            @foreach (var tier in InfectionBalance.All)
+            {
+                <option value="@tier.Infection">@tier.Infection</option>
+            }
+        </select>
+    </label>
+    <label class="srow"><span>Target cycle</span>
+        <input type="number" min="2" step="5" value="@Host.TargetCycle" disabled="@Host.Busy"
+               @onchange="e => Host.TargetCycle = Int(e, Host.TargetCycle)" /></label>
+    <label class="srow"><span>Campaign budget (h)</span>
+        <input type="number" min="1" step="1" value="@Inv(Host.BudgetHours)" disabled="@Host.Busy"
+               @onchange="e => Host.BudgetHours = Num(e, Host.BudgetHours)" /></label>
+    <label class="srow"><span>Max cultures</span>
+        <input type="number" min="1" step="10" value="@Host.RunCap" disabled="@Host.Busy"
+               @onchange="e => Host.RunCap = Int(e, Host.RunCap)" /></label>
+    <label class="srow"><span>Shop every (s)</span>
+        <input type="number" min="0.05" step="0.1" value="@Inv(Host.BuyInterval)" disabled="@Host.Busy"
+               @onchange="e => Host.BuyInterval = Num(e, Host.BuyInterval)" /></label>
+    <label class="srow"><span>Real time at speed</span>
+        <select value="@Host.Speed" disabled="@Host.Busy" @onchange="e => Host.Speed = Int(e, Host.Speed)">
+            @foreach (var s in SimulationBalance.Speeds)
+            {
+                <option value="@s">&#215;@s</option>
+            }
+        </select>
+    </label>
+</div>
+
+<div class="modes">
+    @foreach (var mode in new[] { SearchMode.Priority, SearchMode.Exhaustive })
+    {
+        <button type="button" class="btn @(Host.Mode == mode ? "is-on" : null)" disabled="@Host.Busy"
+                @onclick="() => SetMode(mode)">@Label(mode)</button>
+    }
+</div>
+
+@if (Host.Mode == SearchMode.Priority)
+{
+    <p class="pane-note">
+        Nineteen genes with caps up to 6000 levels cannot be enumerated, so what is searched is the
+        priority behind a build, not the build. Each round samples a population, scores it on shared
+        seeds and refits to the best of them. The finalists are then re-measured on seeds that took no
+        part in the search.
+    </p>
+    <div class="sgrid">
+        <label class="srow"><span>Population</span>
+            <input type="number" min="6" step="4" value="@Host.Population" disabled="@Host.Busy"
+                   @onchange="e => Host.Population = Int(e, Host.Population)" /></label>
+        <label class="srow"><span>Rounds</span>
+            <input type="number" min="1" step="1" value="@Host.Generations" disabled="@Host.Busy"
+                   @onchange="e => Host.Generations = Int(e, Host.Generations)" /></label>
+    </div>
+}
+else
+{
+    <p class="pane-note">
+        Every combination of a weight grid over the ticked genes. The whole space is not reachable -
+        nineteen genes at four levels is 4<sup>19</sup> builds - so the count and the clock are shown
+        before anything starts.
+    </p>
+    <div class="sgrid">
+        <label class="srow"><span>Weight levels</span>
+            <input type="text" value="@Host.GridLevelText" disabled="@Host.Busy"
+                   @onchange="e => Host.SetGridLevels(e.Value as string)" /></label>
+        <label class="srow"><span>Unsearched genes at</span>
+            <input type="number" min="0" step="0.5" value="@Inv(Host.PinnedWeight)" disabled="@Host.Busy"
+                   @onchange="e => Host.PinnedWeight = Num(e, Host.PinnedWeight)" /></label>
+    </div>
+    <label class="scheck">
+        <input type="checkbox" checked="@Host.GridDedup" disabled="@Host.Busy"
+               @onchange="e => Host.GridDedup = (bool?)e.Value == true" />
+        <span>
+            Drop builds that are a multiple of another
+            @if (!Host.Config().DedupSound)
+            {
+                <em> &mdash; ignored here: with unsearched genes above zero, a scaled vector is a different build.</em>
+            }
+        </span>
+    </label>
+
+    <GridMeter />
+}
+
+<label class="scheck">
+    <input type="checkbox" checked="@Host.SeparateRunWeights" disabled="@Host.Busy"
+           @onchange="e => Host.SeparateRunWeights = (bool?)e.Value == true" />
+    <span>Search in-run priorities separately (doubles the search space, squares the grid)</span>
+</label>
+
+<details class="tgroup">
+    <summary>
+        <span class="tgroup-title">Genes in the search</span>
+        <span class="tgroup-count is-on">@Host.Genes.Count/@UpgradeIds.Count</span>
+        <button type="button" class="tgroup-reset" @onclick:stopPropagation @onclick="() => Host.SetAllGenes(true)">all</button>
+    </summary>
+    <p class="tgroup-note">
+        Unticked genes keep the pinned priority and are never emphasised or dropped. Fewer genes
+        converge faster - and in the grid, fewer genes is the difference between minutes and years.
+    </p>
+    <div class="genes">
+        @foreach (var def in UpgradeCatalog.All)
+        {
+            <label class="gene" @key="def.Id">
+                <input type="checkbox" checked="@Host.Genes.Contains(def.Id)" disabled="@Host.Busy"
+                       @onchange="() => Host.ToggleGene(def.Id)" />
+                <span title="@($"{def.Desc} ({def.Id})")">@def.Name</span>
+            </label>
+        }
+    </div>
+</details>
+
+<details class="tgroup">
+    <summary><span class="tgroup-title">Measurement</span></summary>
+    <div class="sgrid">
+        <label class="srow"><span>Seeds per build</span>
+            <input type="number" min="1" max="32" step="1" value="@Host.MaxSeeds" disabled="@Host.Busy"
+                   @onchange="e => Host.MaxSeeds = Int(e, Host.MaxSeeds)" /></label>
+        <label class="srow"><span>Held-out seeds</span>
+            <input type="number" min="2" max="64" step="2" value="@Host.FinalSeeds" disabled="@Host.Busy"
+                   @onchange="e => Host.FinalSeeds = Int(e, Host.FinalSeeds)" /></label>
+        <label class="srow"><span>Builds reported</span>
+            <input type="number" min="1" max="20" step="1" value="@Host.TopK" disabled="@Host.Busy"
+                   @onchange="e => Host.TopK = Int(e, Host.TopK)" /></label>
+        <label class="srow"><span>Search seed</span>
+            <input type="number" min="1" step="1" value="@Host.MasterSeed" disabled="@Host.Busy"
+                   @onchange="e => Host.MasterSeed = (uint)Math.Max(1, Int(e, (int)Host.MasterSeed))" /></label>
+        <label class="srow"><span>Workers</span>
+            <input type="number" min="1" max="64" step="1" value="@Host.Workers" disabled="@Host.Busy"
+                   @onchange="e => Host.Workers = Int(e, Host.Workers)" /></label>
+        <label class="srow"><span>Chart from cycle</span>
+            <input type="number" min="1" step="1" value="@Host.ChartFrom" disabled="@Host.Busy"
+                   @onchange="e => Host.ChartFrom = Int(e, Host.ChartFrom)" /></label>
+    </div>
+</details>
+
+<div class="actions">
+    <button type="button" class="btn btn-primary" disabled="@Host.Busy" @onclick="Start">Start search</button>
+    <button type="button" class="btn" disabled="@(!Host.Busy)" @onclick="Host.Cancel">Stop</button>
+    <button type="button" class="btn" disabled="@Host.Busy" @onclick="Host.Estimate">Time it first</button>
+</div>
+
+<div class="progress">
+    <div class="progress-bar"><i style="width: @((Host.Fraction * 100).ToString("F1", CultureInfo.InvariantCulture))%"></i></div>
+    <p class="progress-text">@Host.Status</p>
+</div>
+
+@code {
+    private void SetMode(SearchMode mode)
+    {
+        Host.Mode = mode;
+        Host.Select(0);
+    }
+
+    private async Task Start()
+    {
+        // The grid is the one mode that can be told, before it starts, that it will not finish.
+        if (Host.Mode == SearchMode.Exhaustive && Host.CampaignsPerSecond <= 0) { await Host.Estimate(); }
+        await Host.Start();
+    }
+
+    private static string Label(SearchMode mode) => mode switch
+    {
+        SearchMode.Priority => "Priority search",
+        _ => "Exhaustive grid",
+    };
+
+    /// <summary>
+    /// A double written straight into the markup takes the operating system's culture with it, and a
+    /// decimal comma is not a value <c>type="number"</c> accepts. Every number that reaches an input
+    /// goes through here instead.
+    /// </summary>
+    private static string Inv(double v) => v.ToString("G10", CultureInfo.InvariantCulture);
+
+    private static double Num(ChangeEventArgs e, double fallback) =>
+        double.TryParse((e.Value as string ?? string.Empty).Replace(',', '.'), NumberStyles.Float,
+            CultureInfo.InvariantCulture, out var v) && double.IsFinite(v)
+            ? v
+            : fallback;
+
+    private static int Int(ChangeEventArgs e, int fallback) =>
+        int.TryParse(e.Value as string, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : fallback;
+}

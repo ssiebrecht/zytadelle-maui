@@ -1,0 +1,92 @@
+@* One gene as a card. Shared by the Gene Lab, where it costs DNA, and the in-culture shop, where it
+   costs ATP. Exactly one buy target per card: the cost pill is filled in the currency colour when
+   the player can afford it and outlined when not - cards are never greyed out. *@
+
+<button class="row @StateClass @(Flash ? "flash" : "")" type="button" style="--i: @Index" @onclick="OnClick">
+    <span class="row-ico"><Icon Name="@Ui.IconFor(Def.Id)" Class="ico ico-lg" /></span>
+    <span class="row-body">
+        <span class="row-head">
+            <span class="row-name">@Def.Name</span>
+            <span class="row-level">
+                @if (Locked)
+                {
+                    <Icon Name="lock" />
+                    <text>LOCKED</text>
+                }
+                else
+                {
+                    <text>LV @Level</text>
+                }
+            </span>
+        </span>
+        <span class="row-value @(ShowNext ? "" : "single")">
+            <span class="cur">@Current</span>
+            <Icon Name="arrow" Class="ico row-arrow" />
+            <span class="next">@(ShowNext ? Next : "")</span>
+        </span>
+    </span>
+    <span class="row-cost @CostClass">
+        @if (Maxed)
+        {
+            <text>MAX</text>
+        }
+        else
+        {
+            @if (Locked)
+            {
+                <span class="row-cost-kicker">Unlock</span>
+            }
+            <span class="row-cost-line">
+                <Icon Name="@(Currency == "atp" ? "atp" : "dna")" />@NumberFormat.Num(Cost)
+            </span>
+        }
+    </span>
+</button>
+
+@code {
+    [Parameter, EditorRequired]
+    public UpgradeDef Def { get; set; } = null!;
+
+    [Parameter]
+    public int Index { get; set; }
+
+    [Parameter]
+    public int Level { get; set; }
+
+    [Parameter]
+    public bool Locked { get; set; }
+
+    [Parameter]
+    public bool Maxed { get; set; }
+
+    [Parameter]
+    public double Cost { get; set; }
+
+    [Parameter]
+    public bool Affordable { get; set; }
+
+    /// <summary>"atp" or "dna".</summary>
+    [Parameter]
+    public string Currency { get; set; } = "dna";
+
+    [Parameter]
+    public string Current { get; set; } = "";
+
+    [Parameter]
+    public string Next { get; set; } = "";
+
+    [Parameter]
+    public bool Flash { get; set; }
+
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    private bool ShowNext => !Locked && !Maxed;
+
+    private string StateClass =>
+        (Maxed ? "maxed " : "") +
+        (Locked ? "locked " : "") +
+        (!Maxed && Affordable ? "affordable" : !Maxed ? "poor" : "");
+
+    private string CostClass => Maxed ? "max" : Locked ? "dna" : Currency;
+}
