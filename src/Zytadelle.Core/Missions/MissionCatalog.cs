@@ -1,5 +1,3 @@
-using Zytadelle.Balancing;
-
 namespace Zytadelle.Core.Missions;
 
 /// <summary>Unit of a mission target, for display.</summary>

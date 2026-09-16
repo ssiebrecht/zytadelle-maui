@@ -1,4 +1,4 @@
-import { ARENA_RADIUS } from "./constants.js";
+import { ARENA_RADIUS, CAMERA_PAD } from "./constants.js";
 import { Backdrop } from "./backdrop.js";
 import { CellPainter } from "./cell.js";
 import { EnemyPainter } from "./enemies.js";
@@ -44,7 +44,7 @@ class CanvasRenderer {
     this.cx = this.w / 2;
     this.cy = usable / 2;
     const half = Math.max(1, Math.min(this.w, usable) * 0.5 - 12);
-    this.scale = half / (ARENA_RADIUS * 1.04) * this.zoom;
+    this.scale = half / (ARENA_RADIUS * CAMERA_PAD) * this.zoom;
     this.backdrop.rebuild(this.w, this.h, this.dpr, ARENA_RADIUS * this.scale, this.cx, this.cy);
   }
   render(world, _dtVisual) {

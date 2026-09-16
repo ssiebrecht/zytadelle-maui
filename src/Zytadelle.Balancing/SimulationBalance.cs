@@ -8,6 +8,9 @@ namespace Zytadelle.Balancing;
 /// </summary>
 public static class SimulationBalance
 {
+    /// <summary>Hard cap on living pathogens; spawning above it is a no-op.</summary>
+    public static int MaxEnemies { get; set; } = 120;
+
     /// <summary>
     /// Length of one simulation step. The loop runs whole steps or none. Changing it moves the
     /// balance rather than its resolution: the fire rate is deliberately quantised to the tick.

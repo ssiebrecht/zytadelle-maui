@@ -28,8 +28,12 @@ public static class EconomyBalance
             : (1 + AtpKillSlowCycle / AtpKillStepEarly + Math.Floor((cycle - AtpKillSlowCycle) / AtpKillStepLate))
               * AtpKillLateFactor;
 
-    public static double AtpForKill(double cycle, double atpBonus, double infectionAtpMult) =>
-        BaseAtpPerKill(cycle) * atpBonus * infectionAtpMult;
+    /// <summary>
+    /// ATP one kill pays. There is no per-tier ATP multiplier: the source tables do not have one,
+    /// and an infection is made harder through HP, damage and the DNA bonus alone.
+    /// </summary>
+    public static double AtpForKill(double cycle, double atpBonus) =>
+        BaseAtpPerKill(cycle) * atpBonus;
 
     /// <summary>
     /// DNA a kill drops. Basics carry a sliver rather than nothing, so the guard is on
@@ -41,8 +45,4 @@ public static class EconomyBalance
         var decay = cycle - spawnCycle > DnaDecayCycles ? DnaDecayMult : 1;
         return enemyDna * dnaPerKill * infectionDnaMult * decay;
     }
-
-    /// <summary>Cycle-end payout. The ATP bonus is already folded into <paramref name="atpPerCycle"/>.</summary>
-    public static (double AtpGained, double DnaGained) CycleEnd(double atpPerCycle, double dnaPerCycle, double infectionDnaMult) =>
-        (atpPerCycle, dnaPerCycle * infectionDnaMult);
 }

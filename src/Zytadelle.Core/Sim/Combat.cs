@@ -1,4 +1,3 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Engine;
 using Zytadelle.Core.Entities;
 using Zytadelle.Core.Upgrades;
@@ -12,14 +11,14 @@ public static class Combat
     public static (double Dmg, bool Crit) RollDamage(double baseDmg, double critChance, double critDamage, Rng rng)
     {
         var crit = rng.Chance(critChance);
-        return (crit ? baseDmg * critDamage : baseDmg, crit);
+        return (CombatBalance.ApplyCrit(baseDmg, critDamage, crit), crit);
     }
 
     public static void DamageEnemy(World w, Enemy e, double dmg)
     {
         if (!e.Alive) return;
         e.Hp -= dmg;
-        e.Flash = CombatBalance.EnemyFlash;
+        e.Flash = RenderBalance.EnemyFlash;
         if (e.Hp <= 0) Kill(w, e);
     }
 
@@ -30,7 +29,7 @@ public static class Combat
         w.Kills++;
         w.KillsByKind = w.KillsByKind.With(e.Kind, w.KillsByKind.Of(e.Kind) + 1);
 
-        var atp = EconomyBalance.AtpForKill(w.Cycle, w.Stats.AtpBonus, w.Infection.AtpMult);
+        var atp = EconomyBalance.AtpForKill(w.Cycle, w.Stats.AtpBonus);
         w.Atp += atp;
         w.AtpEarned += atp;
         w.Dna += EconomyBalance.DnaForKill(e.Def.Dna, e.SpawnCycle, w.Cycle, w.Stats.DnaPerKill, w.Infection.DnaMult);
@@ -43,7 +42,7 @@ public static class Combat
     {
         var taken = CombatBalance.ApplyIncoming(raw, w.Stats.DefPct, w.Stats.DefAbs);
         w.Cell.Hp -= taken;
-        w.Cell.Flash = CombatBalance.CellFlash;
+        w.Cell.Flash = RenderBalance.CellFlash;
         if (w.Cell.Hp > 0) return taken;
         w.Cell.Hp = 0;
         w.Dead = true;
@@ -72,7 +71,9 @@ public static class Combat
 
         SpawnToxin(w, target, RollDamage(s.Damage, s.CritChance, s.CritDamage, w.Rng), RollBounces(w, s));
 
-        var extra = s.MultishotChance > 0 && w.Rng.Chance(s.MultishotChance) ? (int)Math.Floor(s.MultishotTargets) - 1 : 0;
+        var extra = s.MultishotChance > 0 && w.Rng.Chance(s.MultishotChance)
+            ? CombatBalance.MultishotExtraShots(s.MultishotTargets)
+            : 0;
         if (extra <= 0) return;
 
         // Never two toxins on the same pathogen: with nothing else in reach the extra toxins are
@@ -88,7 +89,7 @@ public static class Combat
     }
 
     private static int RollBounces(World w, Stats s) =>
-        s.BounceChance > 0 && w.Rng.Chance(s.BounceChance) ? (int)Math.Floor(s.BounceTargets) : 0;
+        s.BounceChance > 0 && w.Rng.Chance(s.BounceChance) ? CombatBalance.BounceHops(s.BounceTargets) : 0;
 
     private static void SpawnToxin(World w, Enemy target, (double Dmg, bool Crit) roll, int bounces)
     {
@@ -99,18 +100,18 @@ public static class Combat
         w.Projectiles.Add(new Projectile
         {
             Id = w.NextId++,
-            X = dx / d * ArenaBalance.CellRadius,
-            Y = dy / d * ArenaBalance.CellRadius,
-            Vx = dx / d * ArenaBalance.ProjectileSpeed,
-            Vy = dy / d * ArenaBalance.ProjectileSpeed,
-            Speed = ArenaBalance.ProjectileSpeed,
+            X = dx / d * CellBalance.Radius,
+            Y = dy / d * CellBalance.Radius,
+            Vx = dx / d * CellBalance.ProjectileSpeed,
+            Vy = dy / d * CellBalance.ProjectileSpeed,
+            Speed = CellBalance.ProjectileSpeed,
             Dmg = roll.Dmg,
             Crit = roll.Crit,
             FromCell = true,
             Target = target,
             Bounces = bounces,
             Hit = bounces > 0 ? [target.Id] : null,
-            Life = CombatBalance.CellProjectileLife,
+            Life = CellBalance.ProjectileLifetime,
         });
     }
 
@@ -179,7 +180,7 @@ public static class Combat
                     p.Target = next;
                     p.X = t.X;
                     p.Y = t.Y;
-                    p.Life = Math.Max(p.Life, CombatBalance.RicochetHopLife);
+                    p.Life = Math.Max(p.Life, CellBalance.RicochetHopLifetime);
                     continue;
                 }
 
@@ -192,7 +193,7 @@ public static class Combat
             {
                 p.X += p.Vx * dt;
                 p.Y += p.Vy * dt;
-                if (Math.Sqrt(p.X * p.X + p.Y * p.Y) > ArenaBalance.CellRadius) continue;
+                if (Math.Sqrt(p.X * p.X + p.Y * p.Y) > CellBalance.Radius) continue;
                 p.Alive = false;
                 DamageCell(w, p.Dmg);
                 w.PushFx(FxKind.Hit, p.X, p.Y);
@@ -220,7 +221,9 @@ public static class Combat
             var d = Math.Sqrt(e.X * e.X + e.Y * e.Y);
             if (d == 0) d = 1;
             var ranged = e.Def.Ranged;
-            var stopDist = ranged is not null ? w.Stats.Range * ranged.RangeFrac : ArenaBalance.CellRadius + e.Radius;
+            var stopDist = ranged is not null
+                ? w.Stats.Range * ranged.RangeFrac
+                : CellBalance.Radius + e.Radius;
 
             if (d > stopDist)
             {
@@ -255,7 +258,7 @@ public static class Combat
     {
         var d = Math.Sqrt(e.X * e.X + e.Y * e.Y);
         if (d == 0) d = 1;
-        var spd = e.Def.Ranged?.ProjectileSpeed ?? CombatBalance.FallbackEnemyProjectileSpeed;
+        var spd = e.Def.Ranged?.ProjectileSpeed ?? EnemyBalance.ProjectileFallbackSpeed;
         w.Projectiles.Add(new Projectile
         {
             Id = w.NextId++,
@@ -265,7 +268,7 @@ public static class Combat
             Vy = -e.Y / d * spd,
             Speed = spd,
             Dmg = e.Atk * e.DmgMult,
-            Life = CombatBalance.EnemyProjectileLife,
+            Life = EnemyBalance.ProjectileLifetime,
         });
         e.DmgMult += CombatBalance.HeatupPerHit;
     }

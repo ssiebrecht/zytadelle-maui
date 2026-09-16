@@ -1,5 +1,5 @@
 using Zytadelle.App.Game;
-using Zytadelle.Balancing;
+
 using Zytadelle.Core.Upgrades;
 
 namespace Zytadelle.App.Components;
@@ -7,7 +7,7 @@ namespace Zytadelle.App.Components;
 /// <summary>Names and labels the markup needs. The sprite ids match the gene ids one to one.</summary>
 public static class Ui
 {
-    public static string IconFor(UpgradeId id)
+    public static string IconFor(GeneId id)
     {
         var s = id.ToString();
         return char.ToLowerInvariant(s[0]) + s[1..];

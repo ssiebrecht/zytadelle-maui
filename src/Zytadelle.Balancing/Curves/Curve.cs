@@ -1,8 +1,8 @@
 namespace Zytadelle.Balancing.Curves;
 
 /// <summary>
-/// The one growth shape behind every scaling number in the game: enemy health and damage per cycle,
-/// a gene's value per level, and both of its price tracks.
+/// Integrated growth-rate curve used by enemy health and damage per cycle. Upgrades use the
+/// simpler <see cref="PriceCurve"/> and <see cref="UpgradeValueCurve"/> power laws instead.
 /// <code>
 /// growth(x) = rate * (x + shift)^-decay + floor
 /// value(x)  = base * exp( rate * (T(x + shift) - T(1 + shift)) + floor * (x - 1) )
@@ -10,6 +10,7 @@ namespace Zytadelle.Balancing.Curves;
 /// A few curves change character near their cap and carry a second segment in <see cref="Tail"/>,
 /// re-based so its own first step sits at <see cref="TailFrom"/>. Those breakpoints are often
 /// fractional (965.5, 303.5, 163.5, 1848.5) and must not be rounded.
+///
 /// </summary>
 public sealed class Curve
 {
@@ -37,28 +38,37 @@ public sealed class Curve
     /// <summary>Running totals over steps 1..n, grown lazily as levels are bought.</summary>
     private List<double>? _sums;
 
+    /// <summary>Revision the cached totals were built at; a retune past it invalidates them.</summary>
+    private int _sumsRevision;
+
     /// <summary>Value of the curve at step x (x = 1 is the first step).</summary>
     public double ValueAt(double x) =>
         Tail is not null && x >= TailFrom ? Tail.SegmentAt(x - TailFrom + 1) : SegmentAt(x);
 
     /// <summary>
-    /// Sum of the curve over steps 1..n. There is no closed form, so the running totals are cached
-    /// on the curve itself and extended as levels are bought - a gene's value and the DNA sunk into
-    /// it are both this. Retuning writes into the curve object that is already in place, so what
-    /// keeps a retuned curve honest is <see cref="ResetSums"/>, called explicitly by the Balance Lab.
+    /// Sum of the curve over steps 1..n. There is no closed form, so the running totals are cached on the curve itself and extended as levels are bought - a gene's
+    /// value and the DNA sunk into it are both this. Retuning writes into the curve object that is
+    /// already in place, so the memo is stamped with <see cref="BalanceRevision"/> and rebuilds
+    /// itself once that moves; <see cref="ResetSums"/> drops it on demand.
     /// </summary>
     public double SumTo(double n)
     {
         var steps = (int)Math.Max(0, Math.Floor(n));
         if (steps == 0) return 0;
-        var acc = _sums ??= [0];
+
+        if (_sums is null || _sumsRevision != BalanceRevision.Current)
+        {
+            _sums = [0];
+            _sumsRevision = BalanceRevision.Current;
+        }
+        var acc = _sums;
         for (var x = acc.Count; x <= steps; x++) acc.Add(acc[x - 1] + ValueAt(x));
         return acc[steps];
     }
 
     /// <summary>
-    /// Drops the cached running totals. Retuning writes into the curve object that is already in
-    /// place, so the memo has to be told - otherwise the old shape would survive its own constants.
+    /// Drops the cached running totals. <see cref="BalanceRevision"/> does this on its own for a
+    /// tuning pass that remembers to bump; this is the explicit door for one that does not.
     /// </summary>
     public void ResetSums() => _sums = null;
 

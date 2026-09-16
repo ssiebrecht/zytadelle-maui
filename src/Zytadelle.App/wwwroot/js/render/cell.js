@@ -1,4 +1,4 @@
-import { CELL_RADIUS } from "./constants.js";
+import { CELL_RADIUS, LOW_INTEGRITY } from "./constants.js";
 import { TAU, bacillusPath, blobPath, hash01, makeGranules, makeOrganelles, mitoCristaePath } from "./bioShapes.js";
 import { P, glowStops, radial } from "./palette.js";
 const VESICLES = 26;
@@ -68,7 +68,7 @@ class CellPainter {
     const time = world.time;
     const frac = Math.max(0, t.hp / t.maxHp);
     const hurt = t.flash > 0;
-    const low = frac < 0.3;
+    const low = frac < LOW_INTEGRITY;
     const fired = Math.max(0, Math.min(1, t.fireCd * world.stats.attackSpeed));
     const rm = r * 1.15 * (1 - 0.04 * fired);
     const blink = 0.5 + 0.5 * Math.sin(time * 6);

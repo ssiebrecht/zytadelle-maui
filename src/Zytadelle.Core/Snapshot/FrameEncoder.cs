@@ -1,5 +1,5 @@
 using System.Buffers.Binary;
-using Zytadelle.Balancing;
+
 using Zytadelle.Core.Sim;
 
 namespace Zytadelle.Core.Snapshot;
@@ -7,10 +7,11 @@ namespace Zytadelle.Core.Snapshot;
 /// <summary>
 /// Packs the part of the world the renderer actually reads into one little-endian buffer.
 ///
-/// The layout is mirrored by the decoder in <c>wwwroot/js/arena.js</c>; the two must be changed
-/// together. Positions and sizes are single precision because they end up as pixel coordinates, but
-/// world time stays double: every animation phase derives from it, and a float loses sub-millisecond
-/// resolution after a few hours of simulated time.
+/// The decoder in <c>wwwroot/js/arena.js</c> reads the four sizes below off the host at boot rather
+/// than repeating them, so a field added here only needs the matching read added there. Positions
+/// and sizes are single precision because they end up as pixel coordinates, but world time stays
+/// double: every animation phase derives from it, and a float loses sub-millisecond resolution
+/// after a few hours of simulated time.
 ///
 /// Worst case is roughly 13 KB per frame, a live one is 3 to 5 KB.
 /// </summary>
@@ -21,16 +22,19 @@ public static class FrameEncoder
     public const int ProjectileSize = 20;
     public const int FxSize = 20;
 
-    /// <summary>Toxins in flight are unbounded in principle; past this many the rest is not drawn.</summary>
-    private const int MaxProjectiles = 512;
+    private static byte[] _scratch = new byte[WorstCase()];
 
-    private static byte[] _scratch = new byte[
-        HeaderSize + 128 * EnemySize + MaxProjectiles * ProjectileSize + 256 * FxSize];
+    /// <summary>The largest frame the current caps can produce, so the usual frame never resizes.</summary>
+    private static int WorstCase() =>
+        HeaderSize
+        + SimulationBalance.MaxEnemies * EnemySize
+        + RenderBalance.MaxProjectiles * ProjectileSize
+        + (SimulationBalance.FxRingCap + 1) * FxSize;
 
     public static byte[] Encode(World w)
     {
-        var enemyCount = Math.Min(w.Enemies.Count, ArenaBalance.MaxEnemies);
-        var projCount = Math.Min(w.Projectiles.Count, MaxProjectiles);
+        var enemyCount = Math.Min(w.Enemies.Count, SimulationBalance.MaxEnemies);
+        var projCount = Math.Min(w.Projectiles.Count, RenderBalance.MaxProjectiles);
         var fxCount = Math.Min(w.Fx.Count, SimulationBalance.FxRingCap + 1);
 
         var size = HeaderSize + enemyCount * EnemySize + projCount * ProjectileSize + fxCount * FxSize;

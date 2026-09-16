@@ -54,4 +54,14 @@
         <ProjectReference Include="..\Zytadelle.Core\Zytadelle.Core.csproj" />
     </ItemGroup>
 
+  <ItemGroup>
+    <!-- Zytadelle.Balancing is split by topic; every consumer reads across all of it. -->
+    <Using Include="Zytadelle.Balancing" />
+    <Using Include="Zytadelle.Balancing.Curves" />
+    <Using Include="Zytadelle.Balancing.Enemies" />
+    <Using Include="Zytadelle.Balancing.Genes" />
+    <Using Include="Zytadelle.Balancing.Infections" />
+    <Using Include="Zytadelle.Balancing.Missions" />
+  </ItemGroup>
+
 </Project>

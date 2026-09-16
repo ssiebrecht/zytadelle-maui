@@ -1,4 +1,3 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Entities;
 
 namespace Zytadelle.Core.Sim;
@@ -31,23 +30,22 @@ public static class Cycles
     private static void OnCycleStart(World w)
     {
         // Centred, so exactly one cycle's worth of pathogens fits into the spawn phase.
-        w.SpawnTimer = SpawnBalance.SpawnInterval(w.Cycle) / 2;
-        if (!SpawnBalance.IsBossCycle(w.Cycle)) return;
+        w.SpawnTimer = SpawnBalance.SpawnInterval(w.Cycle) * CycleBalance.SpawnTrainOffset;
+        if (!CycleBalance.IsBossCycle(w.Cycle)) return;
         var b = Spawning.Spawn(w, EnemyKind.Boss);
         if (b is not null) w.PushFx(FxKind.Hit, b.X, b.Y);
     }
 
     private static void OnCycleEnd(World w)
     {
-        var (atpGained, dnaGained) = EconomyBalance.CycleEnd(
-            w.Stats.AtpPerCycle * w.Stats.AtpBonus * w.Infection.AtpMult,
-            w.Stats.DnaPerCycle,
-            w.Infection.DnaMult);
+        // The ATP bonus applies to the cycle payout; the infection tier only multiplies DNA.
+        var atpGained = w.Stats.AtpPerCycle * w.Stats.AtpBonus;
+        var dnaGained = w.Stats.DnaPerCycle * w.Infection.DnaMult;
 
         w.Atp += atpGained;
         w.AtpEarned += atpGained;
         w.Dna += dnaGained;
-        if (atpGained > 0) w.PushFx(FxKind.Atp, 0, -10, atpGained);
+        if (atpGained > 0) w.PushFx(FxKind.Atp, 0, RenderBalance.CycleAtpPopupY, atpGained);
     }
 
     public static void Update(World w, double dt)

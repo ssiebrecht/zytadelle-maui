@@ -1,4 +1,3 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Engine;
 using Zytadelle.Core.Entities;
 using Zytadelle.Core.Upgrades;
@@ -57,7 +56,7 @@ public sealed class World
 
     public readonly Levels Run = new();
 
-    public required IReadOnlySet<UpgradeId> Unlocked { get; init; }
+    public required IReadOnlySet<GeneId> Unlocked { get; init; }
 
     public Stats Stats { get; private set; } = null!;
 
@@ -73,7 +72,7 @@ public sealed class World
 
     public readonly List<double> DnaWindow = [];
 
-    public static World Create(int infection, Levels lab, IEnumerable<UpgradeId> unlocked, uint? seed = null)
+    public static World Create(int infection, Levels lab, IEnumerable<GeneId> unlocked, uint? seed = null)
     {
         var labCopy = new Levels(lab);
         var stats = Stats.From(labCopy, new Levels());
@@ -100,6 +99,8 @@ public sealed class World
         var prevMax = Cell.MaxHp;
         Stats = Stats.From(Lab, Run);
         Cell.MaxHp = Stats.Health;
+        // Deliberate: the growth is handed over as integrity, so buying Membrane mid-culture is a
+        // heal as well as a bigger bar. Shrinking never takes integrity away, only clamps it.
         if (Cell.MaxHp > prevMax) Cell.Hp += Cell.MaxHp - prevMax;
         Cell.Hp = Math.Min(Cell.Hp, Cell.MaxHp);
     }

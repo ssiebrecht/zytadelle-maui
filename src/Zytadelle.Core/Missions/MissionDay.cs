@@ -1,5 +1,3 @@
-using Zytadelle.Balancing;
-
 namespace Zytadelle.Core.Missions;
 
 /// <summary>One of the five daily missions.</summary>

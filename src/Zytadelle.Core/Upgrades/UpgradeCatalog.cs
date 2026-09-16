@@ -1,5 +1,3 @@
-using Zytadelle.Balancing;
-
 namespace Zytadelle.Core.Upgrades;
 
 /// <summary>Where a gene lives in the UI.</summary>
@@ -23,18 +21,17 @@ public enum ValueFmt
 
 /// <summary>
 /// What a gene is called and where it sits. Every number behind it - value, price, cap and unlock
-/// cost - comes from <see cref="UpgradeBalance"/>.
+/// cost - comes from the gene definition in <see cref="GeneRegistry"/>.
 /// </summary>
-public sealed record UpgradeDef(UpgradeId Id, GeneTab Tab, string Name, string Desc, ValueFmt Fmt)
+public sealed record UpgradeDef(GeneId Id, GeneTab Tab, string Name, string Desc, ValueFmt Fmt)
 {
-    public UpgradeCurves Curves => UpgradeBalance.Of(Id);
+    public GeneDefinition Gene => GeneRegistry.Get(Id);
 
-    public int Cap => Curves.Cap;
+    public int Cap => Gene.Cap;
 
-    public int UnlockDna => Curves.UnlockDna;
+    public int UnlockDna => Gene.UnlockDna;
 
-    /// <summary>Null = Gene Lab only, no in-culture purchase.</summary>
-    public bool BuyableInRun => Curves.Atp is not null;
+    public bool BuyableInRun => Gene.BuyableInRun;
 }
 
 /// <summary>
@@ -51,32 +48,32 @@ public static class UpgradeCatalog
     public static readonly IReadOnlyList<UpgradeDef> All =
     [
         // Offense
-        new(UpgradeId.Damage, GeneTab.Attack, "Toxicity", "Toxin damage per hit", ValueFmt.Num),
-        new(UpgradeId.AttackSpeed, GeneTab.Attack, "Secretion Rate", "Toxins fired per second", ValueFmt.PerSec),
-        new(UpgradeId.CritChance, GeneTab.Attack, "Rupture Chance", "Chance of a rupturing hit", ValueFmt.Pct),
-        new(UpgradeId.CritDamage, GeneTab.Attack, "Rupture Damage", "Rupture damage multiplier", ValueFmt.Mult),
-        new(UpgradeId.Range, GeneTab.Attack, "Reach", "Targeting radius", ValueFmt.Meters),
-        new(UpgradeId.MultishotChance, GeneTab.Attack, "Granule Chance", "Chance of a granule burst", ValueFmt.Pct),
-        new(UpgradeId.MultishotTargets, GeneTab.Attack, "Granule Count", "Pathogens a burst hits at once", ValueFmt.Num),
-        new(UpgradeId.BounceChance, GeneTab.Attack, "Diffusion Chance", "Chance a toxin diffuses onward", ValueFmt.Pct),
-        new(UpgradeId.BounceTargets, GeneTab.Attack, "Diffusion Depth", "Further pathogens a toxin reaches", ValueFmt.Num),
-        new(UpgradeId.BounceRange, GeneTab.Attack, "Diffusion Range", "How far a toxin diffuses", ValueFmt.Meters),
+        new(GeneId.Damage, GeneTab.Attack, "Toxicity", "Toxin damage per hit", ValueFmt.Num),
+        new(GeneId.AttackSpeed, GeneTab.Attack, "Secretion Rate", "Multiplier on the cell's base fire rate", ValueFmt.Mult),
+        new(GeneId.CritChance, GeneTab.Attack, "Rupture Chance", "Chance of a rupturing hit", ValueFmt.Pct),
+        new(GeneId.CritDamage, GeneTab.Attack, "Rupture Damage", "Rupture damage multiplier", ValueFmt.Mult),
+        new(GeneId.Range, GeneTab.Attack, "Reach", "Targeting radius", ValueFmt.Meters),
+        new(GeneId.MultishotChance, GeneTab.Attack, "Granule Chance", "Chance of a granule burst", ValueFmt.Pct),
+        new(GeneId.MultishotTargets, GeneTab.Attack, "Granule Count", "Pathogens a burst hits at once", ValueFmt.Num),
+        new(GeneId.BounceChance, GeneTab.Attack, "Diffusion Chance", "Chance a toxin diffuses onward", ValueFmt.Pct),
+        new(GeneId.BounceTargets, GeneTab.Attack, "Diffusion Depth", "Further pathogens a toxin reaches", ValueFmt.Num),
+        new(GeneId.BounceRange, GeneTab.Attack, "Diffusion Range", "How far a toxin diffuses", ValueFmt.Meters),
         // Barrier
-        new(UpgradeId.Health, GeneTab.Defense, "Membrane", "Max cell integrity", ValueFmt.Num),
-        new(UpgradeId.Regen, GeneTab.Defense, "Repair", "Integrity restored per second", ValueFmt.PerSec),
-        new(UpgradeId.DefPct, GeneTab.Defense, "Resistance %", "Incoming damage reduction", ValueFmt.Pct),
-        new(UpgradeId.DefAbs, GeneTab.Defense, "Cell Wall", "Flat damage blocked per hit", ValueFmt.Num),
+        new(GeneId.Health, GeneTab.Defense, "Membrane", "Max cell integrity", ValueFmt.Num),
+        new(GeneId.Regen, GeneTab.Defense, "Repair", "Integrity restored per second", ValueFmt.PerSec),
+        new(GeneId.DefPct, GeneTab.Defense, "Resistance %", "Incoming damage reduction", ValueFmt.Pct),
+        new(GeneId.DefAbs, GeneTab.Defense, "Cell Wall", "Flat damage blocked per hit", ValueFmt.Num),
         // Metabolism
-        new(UpgradeId.AtpBonus, GeneTab.Utility, "ATP Yield", "Multiplier on all ATP earned", ValueFmt.Mult),
-        new(UpgradeId.AtpPerCycle, GeneTab.Utility, "ATP / Cycle", "ATP granted at cycle end", ValueFmt.Atp),
-        new(UpgradeId.StartAtp, GeneTab.Utility, "ATP Reserve", "ATP available at culture start", ValueFmt.Atp),
-        new(UpgradeId.DnaPerKill, GeneTab.Utility, "DNA / Kill", "Multiplier on DNA drops", ValueFmt.Mult),
-        new(UpgradeId.DnaPerCycle, GeneTab.Utility, "DNA / Cycle", "DNA granted at cycle end", ValueFmt.Num),
+        new(GeneId.AtpBonus, GeneTab.Utility, "ATP Yield", "Multiplier on all ATP earned", ValueFmt.Mult),
+        new(GeneId.AtpPerCycle, GeneTab.Utility, "ATP / Cycle", "ATP granted at cycle end", ValueFmt.Atp),
+        new(GeneId.StartAtp, GeneTab.Utility, "ATP Reserve", "ATP available at culture start", ValueFmt.Atp),
+        new(GeneId.DnaPerKill, GeneTab.Utility, "DNA / Kill", "Multiplier on DNA drops", ValueFmt.Mult),
+        new(GeneId.DnaPerCycle, GeneTab.Utility, "DNA / Cycle", "DNA granted at cycle end", ValueFmt.Num),
     ];
 
-    private static readonly Dictionary<UpgradeId, UpgradeDef> ById = All.ToDictionary(u => u.Id);
+    private static readonly Dictionary<GeneId, UpgradeDef> ById = All.ToDictionary(u => u.Id);
 
-    public static UpgradeDef Def(UpgradeId id) => ById[id];
+    public static UpgradeDef Def(GeneId id) => ById[id];
 
     public static readonly IReadOnlyList<(GeneTab Tab, string Label)> Tabs =
     [

@@ -36,18 +36,18 @@
                      Cost="action.Cost"
                      Affordable="Host.Save.Dna >= action.Cost"
                      Currency="dna"
-                     Current="@(locked ? def.Desc : NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, action.Level)))"
-                     Next="@NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, action.Level + 1))"
+                     Current="@(locked ? def.Desc : NumberFormat.Value(def.Fmt, GeneRegistry.ValueAt(id, action.Level)))"
+                     Next="@NumberFormat.Value(def.Fmt, GeneRegistry.ValueAt(id, action.Level + 1))"
                      Flash="_lastBought == id"
                      OnClick="() => Buy(id)" />
     }
 </div>
 
 @code {
-    private readonly Dictionary<UpgradeId, int> _buys = [];
-    private UpgradeId? _lastBought;
+    private readonly Dictionary<GeneId, int> _buys = [];
+    private GeneId? _lastBought;
 
-    private int Bought(UpgradeId id) => _buys.GetValueOrDefault(id);
+    private int Bought(GeneId id) => _buys.GetValueOrDefault(id);
 
     private int UnlockedCount => Host.Save.Unlocked.Count + UpgradeCatalog.FreeGeneCount;
 
@@ -57,7 +57,7 @@
         Host.Announce();
     }
 
-    private void Buy(UpgradeId id)
+    private void Buy(GeneId id)
     {
         if (Host.BuyLab(id) is not (LabResult.Bought or LabResult.Unlocked)) { return; }
         _buys[id] = Bought(id) + 1;

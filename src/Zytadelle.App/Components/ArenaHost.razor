@@ -32,12 +32,7 @@
         if (!firstRender) return;
         _self = DotNetObjectReference.Create(this);
         _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/arena.js");
-        await _module.InvokeVoidAsync("boot", "#arena", _self, new
-        {
-            arenaRadius = ArenaBalance.ArenaRadius,
-            cellRadius = ArenaBalance.CellRadius,
-            enemyRadii = Enum.GetValues<EnemyKind>().Select(k => EnemyBalance.Def(k).Radius).ToArray(),
-        });
+        await _module.InvokeVoidAsync("boot", "#arena", _self, BalanceBridge.Payload());
         if (ShowProbe) StartProbe();
     }
 

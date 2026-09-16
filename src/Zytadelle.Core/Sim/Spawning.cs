@@ -1,4 +1,3 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Entities;
 
 namespace Zytadelle.Core.Sim;
@@ -13,9 +12,7 @@ public static class Spawning
     public static EnemyKind PickKind(World w)
     {
         var weights = SpawnBalance.Weights(w.Cycle);
-        var total = 0.0;
-        foreach (var k in SpawnBalance.SpawnKinds) total += weights.Of(k);
-        var r = w.Rng.Next() * total;
+        var r = w.Rng.Next() * weights.Sum;
         foreach (var k in SpawnBalance.SpawnKinds)
         {
             r -= weights.Of(k);
@@ -30,7 +27,7 @@ public static class Spawning
     /// </summary>
     public static Enemy? Spawn(World w, EnemyKind kind)
     {
-        if (w.Enemies.Count >= ArenaBalance.MaxEnemies) return null;
+        if (w.Enemies.Count >= SimulationBalance.MaxEnemies) return null;
         var def = EnemyBalance.Def(kind);
         var ang = w.Rng.Next() * Math.PI * 2;
         var hp = def.Hp * EnemyScalingBalance.BasicHpAt(w.Cycle) * w.Infection.HpMult;

@@ -1,4 +1,3 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Missions;
 using Zytadelle.Core.Upgrades;
 
@@ -16,14 +15,15 @@ public sealed class SaveData
     /// <summary>Permanent Gene Lab levels; the starting levels of every culture.</summary>
     public Levels Lab = new();
 
-    public List<UpgradeId> Unlocked = [];
+    public List<GeneId> Unlocked = [];
 
     /// <summary>Best cycle reached per infection.</summary>
     public Dictionary<int, int> BestCycle = [];
 
     public int SelectedInfection = 1;
 
-    public int Speed = 1;
+    /// <summary>Selected tempo. A fresh save starts at the slowest offered speed.</summary>
+    public int Speed = SimulationBalance.Speeds[0];
 
     public int TotalRuns;
 
@@ -33,7 +33,7 @@ public sealed class SaveData
     public MissionDay? Missions;
 
     /// <summary>Genes visible in a culture: the free ones plus everything unlocked.</summary>
-    public IEnumerable<UpgradeId> UnlockedIds() =>
+    public IEnumerable<GeneId> UnlockedIds() =>
         UpgradeCatalog.All.Where(u => u.UnlockDna == 0 || Unlocked.Contains(u.Id)).Select(u => u.Id);
 
     /// <summary>Books a finished culture: banks its DNA and keeps the record if it was one.</summary>

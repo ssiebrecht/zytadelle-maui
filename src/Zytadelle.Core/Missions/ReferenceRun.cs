@@ -1,5 +1,5 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Persistence;
+using Zytadelle.Core.Progression;
 using Zytadelle.Core.Upgrades;
 
 namespace Zytadelle.Core.Missions;
@@ -17,14 +17,13 @@ public static class ReferenceRun
 {
     public static MissionReference Compute(SaveData s)
     {
-        var cycle = MissionBalance.AnchorCycle(s.BestCycle);
-        var infection = InfectionBalance.HighestUnlocked(s.BestCycle);
+        var cycle = InfectionProgress.AnchorCycle(s.BestCycle);
+        var infection = InfectionProgress.HighestUnlocked(s.BestCycle);
         var inf = InfectionBalance.Def(infection);
         var stats = Stats.From(s.Lab, new Levels());
         var t = SpawnBalance.Totals(cycle);
 
-        var byKind = new KindCounts(t.Basic, t.Fast, t.Tank, t.Ranged, t.Boss);
-        var kills = t.Total + t.Boss;
+        var kills = t.Total;
 
         // Basics are left out: their drop is a sliver and the estimate is meant to be conservative.
         var dropDna = t.Fast * EnemyBalance.Def(EnemyKind.Fast).Dna
@@ -35,13 +34,13 @@ public static class ReferenceRun
 
         var killAtp = 0.0;
         for (var c = 1; c <= cycle; c++) killAtp += SpawnBalance.SpawnsPerCycle(c) * EconomyBalance.BaseAtpPerKill(c);
-        var atp = (killAtp + cycle * stats.AtpPerCycle) * stats.AtpBonus * inf.AtpMult;
+        var atp = (killAtp + cycle * stats.AtpPerCycle) * stats.AtpBonus;
 
         return new MissionReference(
             cycle,
             infection,
             kills,
-            byKind,
+            t,
             dna,
             atp,
             cycle * CycleBalance.CycleLength,

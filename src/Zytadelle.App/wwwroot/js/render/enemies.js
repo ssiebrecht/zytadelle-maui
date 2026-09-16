@@ -1,4 +1,4 @@
-import { ENEMIES } from "./constants.js";
+import { ENEMIES, ENEMY_FLASH, HEAT_GLOW_FROM, HP_BAR_HIDE_ABOVE } from "./constants.js";
 import { TAU, beanPath, hash01 } from "./bioShapes.js";
 import {
   CILIATE_RX,
@@ -230,7 +230,7 @@ class EnemyPainter {
       }
       ctx.restore();
       if (fl > 0) {
-        const k = Math.max(0, Math.min(1, 1 - e.flash / 0.12));
+        const k = Math.max(0, Math.min(1, 1 - e.flash / ENEMY_FLASH));
         if (k < 0.35) {
           ctx.lineWidth = 0.3;
           ctx.strokeStyle = `rgba(255,255,255,${(1 - k / 0.35) * 0.6})`;
@@ -239,7 +239,7 @@ class EnemyPainter {
           ctx.stroke();
         }
       }
-      if (e.dmgMult > 1.2) {
+      if (e.dmgMult > HEAT_GLOW_FROM) {
         const a = Math.min(0.6, (e.dmgMult - 1) * 0.6) * (0.8 + 0.2 * Math.sin(time * 6));
         ctx.fillStyle = `rgba(${P.dangerRgb},${a})`;
         ctx.beginPath();
@@ -253,7 +253,7 @@ class EnemyPainter {
   }
   /** Rounded glass bar above damaged, non-trivial enemies (boss: cilia extend the silhouette, so raise it). */
   hpBar(e, kit) {
-    if (!(e.hp < e.maxHp && (e.kind === "boss" || e.kind === "tank" || e.hp / e.maxHp < 0.99))) return;
+    if (!(e.hp < e.maxHp && (e.kind === "boss" || e.kind === "tank" || e.hp / e.maxHp < HP_BAR_HIDE_ABOVE))) return;
     const { ctx } = this;
     const boss = e.kind === "boss";
     const w = e.radius * (boss ? 3 : 2.4);

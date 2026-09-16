@@ -1,5 +1,3 @@
-using Zytadelle.Balancing;
-
 namespace Zytadelle.Core.Upgrades;
 
 /// <summary>
@@ -8,13 +6,13 @@ namespace Zytadelle.Core.Upgrades;
 /// </summary>
 public sealed class Levels
 {
-    private readonly int[] _v = new int[UpgradeIds.Count];
+    private readonly int[] _v = new int[GeneIds.Count];
 
     public Levels() { }
 
     public Levels(Levels other) => Array.Copy(other._v, _v, _v.Length);
 
-    public int this[UpgradeId id]
+    public int this[GeneId id]
     {
         get => _v[(int)id];
         set => _v[(int)id] = value;
@@ -23,11 +21,11 @@ public sealed class Levels
     public bool IsEmpty => _v.All(v => v == 0);
 
     /// <summary>Only the genes that actually carry a level, in catalog order.</summary>
-    public IEnumerable<(UpgradeId Id, int Level)> NonZero()
+    public IEnumerable<(GeneId Id, int Level)> NonZero()
     {
         for (var i = 0; i < _v.Length; i++)
             if (_v[i] > 0)
-                yield return ((UpgradeId)i, _v[i]);
+                yield return ((GeneId)i, _v[i]);
     }
 }
 
@@ -37,37 +35,37 @@ public sealed class Levels
 /// </summary>
 public sealed class Stats
 {
-    private readonly double[] _v = new double[UpgradeIds.Count];
+    private readonly double[] _v = new double[GeneIds.Count];
 
     /// <summary>Effective stats from Gene Lab levels plus the levels bought during this culture.</summary>
     public static Stats From(Levels lab, Levels run)
     {
         var s = new Stats();
-        foreach (var id in UpgradeIds.All) s._v[(int)id] = UpgradeBalance.ValueAt(id, TotalLevel(lab, run, id));
+        foreach (var id in GeneIds.All) s._v[(int)id] = GeneRegistry.ValueAt(id, TotalLevel(lab, run, id));
         return s;
     }
 
-    public static int TotalLevel(Levels lab, Levels run, UpgradeId id) => lab[id] + run[id];
+    public static int TotalLevel(Levels lab, Levels run, GeneId id) => lab[id] + run[id];
 
-    public double this[UpgradeId id] => _v[(int)id];
+    public double this[GeneId id] => _v[(int)id];
 
-    public double Damage => _v[(int)UpgradeId.Damage];
-    public double AttackSpeed => _v[(int)UpgradeId.AttackSpeed];
-    public double CritChance => _v[(int)UpgradeId.CritChance];
-    public double CritDamage => _v[(int)UpgradeId.CritDamage];
-    public double Range => _v[(int)UpgradeId.Range];
-    public double MultishotChance => _v[(int)UpgradeId.MultishotChance];
-    public double MultishotTargets => _v[(int)UpgradeId.MultishotTargets];
-    public double BounceChance => _v[(int)UpgradeId.BounceChance];
-    public double BounceTargets => _v[(int)UpgradeId.BounceTargets];
-    public double BounceRange => _v[(int)UpgradeId.BounceRange];
-    public double Health => _v[(int)UpgradeId.Health];
-    public double Regen => _v[(int)UpgradeId.Regen];
-    public double DefPct => _v[(int)UpgradeId.DefPct];
-    public double DefAbs => _v[(int)UpgradeId.DefAbs];
-    public double AtpBonus => _v[(int)UpgradeId.AtpBonus];
-    public double AtpPerCycle => _v[(int)UpgradeId.AtpPerCycle];
-    public double StartAtp => _v[(int)UpgradeId.StartAtp];
-    public double DnaPerKill => _v[(int)UpgradeId.DnaPerKill];
-    public double DnaPerCycle => _v[(int)UpgradeId.DnaPerCycle];
+    public double Damage => _v[(int)GeneId.Damage];
+    public double AttackSpeed => CellBalance.EffectiveAttackSpeed(_v[(int)GeneId.AttackSpeed]);
+    public double CritChance => _v[(int)GeneId.CritChance];
+    public double CritDamage => _v[(int)GeneId.CritDamage];
+    public double Range => _v[(int)GeneId.Range];
+    public double MultishotChance => _v[(int)GeneId.MultishotChance];
+    public double MultishotTargets => _v[(int)GeneId.MultishotTargets];
+    public double BounceChance => _v[(int)GeneId.BounceChance];
+    public double BounceTargets => _v[(int)GeneId.BounceTargets];
+    public double BounceRange => _v[(int)GeneId.BounceRange];
+    public double Health => _v[(int)GeneId.Health];
+    public double Regen => _v[(int)GeneId.Regen];
+    public double DefPct => _v[(int)GeneId.DefPct];
+    public double DefAbs => _v[(int)GeneId.DefAbs];
+    public double AtpBonus => _v[(int)GeneId.AtpBonus];
+    public double AtpPerCycle => _v[(int)GeneId.AtpPerCycle];
+    public double StartAtp => _v[(int)GeneId.StartAtp];
+    public double DnaPerKill => _v[(int)GeneId.DnaPerKill];
+    public double DnaPerCycle => _v[(int)GeneId.DnaPerCycle];
 }

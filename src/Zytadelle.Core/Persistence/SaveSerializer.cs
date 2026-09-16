@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using Zytadelle.Balancing;
+
 using Zytadelle.Core.Missions;
 using Zytadelle.Core.Upgrades;
 
@@ -20,9 +20,9 @@ public static class SaveSerializer
 {
     private const int Version = 1;
 
-    private static readonly Dictionary<string, UpgradeId> UpgradeByJson = BuildUpgradeNames();
-    private static readonly Dictionary<UpgradeId, string> UpgradeToJson =
-        UpgradeIds.All.ToDictionary(id => id, id => Camel(id));
+    private static readonly Dictionary<string, GeneId> UpgradeByJson = BuildUpgradeNames();
+    private static readonly Dictionary<GeneId, string> UpgradeToJson =
+        GeneIds.All.ToDictionary(id => id, id => Camel(id));
     private static readonly Dictionary<string, MissionId> MissionByJson =
         Enum.GetValues<MissionId>().ToDictionary(id => Camel(id), id => id);
     private static readonly Dictionary<MissionId, string> MissionToJson =
@@ -34,15 +34,15 @@ public static class SaveSerializer
         return char.ToLowerInvariant(s[0]) + s[1..];
     }
 
-    private static Dictionary<string, UpgradeId> BuildUpgradeNames()
+    private static Dictionary<string, GeneId> BuildUpgradeNames()
     {
-        var map = UpgradeIds.All.ToDictionary(id => Camel(id), id => id);
+        var map = GeneIds.All.ToDictionary(id => Camel(id), id => id);
         // Ids renamed when the game was rethemed. Older saves still carry the old ones.
-        map["critFactor"] = UpgradeId.CritDamage;
-        map["cashBonus"] = UpgradeId.AtpBonus;
-        map["cashPerWave"] = UpgradeId.AtpPerCycle;
-        map["coinsPerKill"] = UpgradeId.DnaPerKill;
-        map["coinsPerWave"] = UpgradeId.DnaPerCycle;
+        map["critFactor"] = GeneId.CritDamage;
+        map["cashBonus"] = GeneId.AtpBonus;
+        map["cashPerWave"] = GeneId.AtpPerCycle;
+        map["coinsPerKill"] = GeneId.DnaPerKill;
+        map["coinsPerWave"] = GeneId.DnaPerCycle;
         return map;
     }
 

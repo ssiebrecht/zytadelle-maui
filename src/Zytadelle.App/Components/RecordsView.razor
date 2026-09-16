@@ -21,10 +21,10 @@
     <div class="record-list">
         @foreach (var t in InfectionBalance.All)
         {
-            var unlocked = InfectionBalance.IsUnlocked(t.Infection, Host.Save.BestCycle);
+            var unlocked = InfectionProgress.IsUnlocked(t.Infection, Host.Save.BestCycle);
             var best = Host.Save.Best(t.Infection);
             var prevBest = Host.Save.Best(t.Infection - 1);
-            var reachable = InfectionBalance.IsUnlocked(t.Infection - 1, Host.Save.BestCycle);
+            var reachable = InfectionProgress.IsUnlocked(t.Infection - 1, Host.Save.BestCycle);
             var gate = $"Reach cycle {InfectionBalance.UnlockCycle} on Infection {t.Infection - 1} · DNA ×{Fmt1(t.DnaMult)}";
 
             if (unlocked)

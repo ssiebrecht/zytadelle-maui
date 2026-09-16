@@ -1,6 +1,6 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Missions;
 using Zytadelle.Core.Persistence;
+using Zytadelle.Core.Progression;
 using Zytadelle.Core.Sim;
 using Zytadelle.Core.Snapshot;
 using Zytadelle.Core.Upgrades;
@@ -79,6 +79,12 @@ public sealed class GameHost(ISaveStorage storage)
         RollMissions();
         RebuildPreview();
 #if DEBUG
+        // The tuning set is written by reflection and a search can propose any number at all, so
+        // the shapes everything downstream assumes are checked once at startup rather than met as
+        // a hang or a blank dish later on.
+        foreach (var problem in BalanceCheck.Validate())
+            System.Diagnostics.Debug.WriteLine($"balance: {problem}");
+
         if (Environment.GetEnvironmentVariable("ZYTADELLE_STRESS") == "1") StartStressCulture();
         ApplyDebugView(Environment.GetEnvironmentVariable("ZYTADELLE_VIEW"));
 #endif
@@ -122,10 +128,10 @@ public sealed class GameHost(ISaveStorage storage)
     {
         // Deliberately all barrier and no offense: the cell has to survive without clearing the
         // field, which is the only way to actually reach the pathogen cap and measure the worst case.
-        (UpgradeId Id, int Level)[] build =
+        (GeneId Id, int Level)[] build =
         [
-            (UpgradeId.Health, 400), (UpgradeId.Regen, 320), (UpgradeId.DefPct, 99), (UpgradeId.DefAbs, 700),
-            (UpgradeId.Range, 40),
+            (GeneId.Health, 400), (GeneId.Regen, 320), (GeneId.DefPct, 99), (GeneId.DefAbs, 700),
+            (GeneId.Range, 40),
         ];
         foreach (var (id, level) in build) Save.Lab[id] = level;
         foreach (var def in UpgradeCatalog.All)
@@ -176,7 +182,7 @@ public sealed class GameHost(ISaveStorage storage)
 
     private void PublishUiThrottled()
     {
-        if (_clock - _lastUiPublish < 0.1) return;
+        if (_clock - _lastUiPublish < RenderBalance.UiPublishInterval) return;
         _lastUiPublish = _clock;
         UiChanged?.Invoke();
     }
@@ -247,20 +253,24 @@ public sealed class GameHost(ISaveStorage storage)
     private void RebuildPreview()
     {
         Preview = World.Create(Save.SelectedInfection, Save.Lab, Save.UnlockedIds());
-        // Frame the cell as the hero: the reach ring lands at about 60 % of the short side.
-        Zoom = Math.Min(3.6, Math.Max(1, ArenaBalance.ArenaRadius * 1.04 / (Preview.Stats.Range * 0.83)));
+        // Frame the cell as the hero: the reach ring lands at about 60 % of the short side. The pad
+        // is the same one the renderer fits the dish with, so the two never disagree about the edge.
+        Zoom = Math.Min(
+            RenderBalance.CameraZoomMax,
+            Math.Max(1, ArenaBalance.ArenaRadius * RenderBalance.CameraPad
+                        / (Preview.Stats.Range * RenderBalance.CameraRangeFrac)));
     }
 
     public void SelectInfection(int infection)
     {
-        if (!InfectionBalance.IsUnlocked(infection, Save.BestCycle)) return;
+        if (!InfectionProgress.IsUnlocked(infection, Save.BestCycle)) return;
         Save.SelectedInfection = infection;
         Persist();
         RebuildPreview();
         Announce();
     }
 
-    public LabResult BuyLab(UpgradeId id)
+    public LabResult BuyLab(GeneId id)
     {
         var result = LabPurchase.Buy(Save, id);
         if (result is LabResult.Bought or LabResult.Unlocked)
@@ -272,7 +282,7 @@ public sealed class GameHost(ISaveStorage storage)
         return result;
     }
 
-    public BuyResult BuyRun(UpgradeId id)
+    public BuyResult BuyRun(GeneId id)
     {
         if (World is null) return BuyResult.Locked;
         var result = Purchase.Buy(World, id);

@@ -1,5 +1,3 @@
-using Zytadelle.Balancing;
-
 namespace Zytadelle.Core.Entities;
 
 /// <summary>
@@ -30,8 +28,8 @@ public sealed class Enemy
     /// <summary>The cycle it spawned in; drives the decay on its DNA drop.</summary>
     public int SpawnCycle;
 
-    /// <summary>Heat-up multiplier on the damage it deals. Starts at 1 and never resets.</summary>
-    public double DmgMult = 1;
+    /// <summary>Heat-up multiplier on the damage it deals. Never resets once it has climbed.</summary>
+    public double DmgMult = CombatBalance.HeatupBase;
 
     public double AttackCd;
 

@@ -1,5 +1,3 @@
-using Zytadelle.Balancing;
-using Zytadelle.Balancing.Curves;
 using Zytadelle.Core.Engine;
 using Zytadelle.Core.Persistence;
 
@@ -42,8 +40,8 @@ public static class MissionRoll
                 list.Add(new MissionSlot
                 {
                     Id = rule.Id,
-                    Target = Math.Max(1, JsMath.Round(rule.Target(reference))),
-                    Pct = JsMath.Round(pct * 100) / 100,
+                    Target = MissionBalance.TargetFor(rule, reference),
+                    Pct = MissionBalance.RoundPct(pct),
                 });
             }
         }

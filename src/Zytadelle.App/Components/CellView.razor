@@ -12,10 +12,10 @@
     @foreach (var t in InfectionBalance.All)
     {
         var infection = t.Infection;
-        var unlocked = InfectionBalance.IsUnlocked(infection, Host.Save.BestCycle);
+        var unlocked = InfectionProgress.IsUnlocked(infection, Host.Save.BestCycle);
         var best = Host.Save.Best(infection);
         var prevBest = Host.Save.Best(infection - 1);
-        var reachable = InfectionBalance.IsUnlocked(infection - 1, Host.Save.BestCycle);
+        var reachable = InfectionProgress.IsUnlocked(infection - 1, Host.Save.BestCycle);
 
         <button type="button"
                 class="infection @(infection == Host.Save.SelectedInfection ? "active" : "") @(unlocked ? "" : "locked")"

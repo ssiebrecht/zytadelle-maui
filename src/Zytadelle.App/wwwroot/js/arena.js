@@ -8,13 +8,7 @@
 // an idle game should do.
 
 import { CanvasRenderer } from './render/canvasRenderer.js';
-import { KIND_NAMES, FX_NAMES, checkConstants } from './render/constants.js';
-
-// Must match Zytadelle.Core.Snapshot.FrameEncoder.
-const HEADER = 40;
-const ENEMY = 44;
-const PROJ = 20;
-const FX = 20;
+import { KIND_NAMES, FX_NAMES, FRAME, SEED, applyBalance } from './render/constants.js';
 
 let api = null;
 
@@ -30,7 +24,7 @@ class Arena {
     this.view = {
       time: 0,
       cell: { hp: 1, maxHp: 1, flash: 0, fireCd: 0 },
-      stats: { range: 30, attackSpeed: 1 },
+      stats: { range: SEED.range, attackSpeed: SEED.attackSpeed },
       enemies: [],
       projectiles: [],
       fx: [],
@@ -65,12 +59,12 @@ class Arena {
     this.grow(this.enemyPool, nE, () => ({
       id: 0, kind: 'basic', x: 0, y: 0, radius: 1, hp: 1, maxHp: 1,
       flash: 0, dmgMult: 1, attackCd: 0, arrived: false, alive: true,
-      def: { attackInterval: 2 },
+      def: { attackInterval: SEED.attackInterval },
     }));
     this.grow(this.projPool, nP, () => ({ x: 0, y: 0, vx: 0, vy: 0, crit: false, fromCell: true, alive: true }));
     this.grow(this.fxPool, nF, () => ({ kind: 'kill', x: 0, y: 0, t: 0, value: 0 }));
 
-    let o = HEADER;
+    let o = FRAME.header;
     v.enemies.length = nE;
     for (let i = 0; i < nE; i++) {
       const e = this.enemyPool[i];
@@ -87,7 +81,7 @@ class Arena {
       e.attackCd = dv.getFloat32(o + 36, true);
       e.def.attackInterval = dv.getFloat32(o + 40, true);
       v.enemies[i] = e;
-      o += ENEMY;
+      o += FRAME.enemy;
     }
 
     v.projectiles.length = nP;
@@ -101,7 +95,7 @@ class Arena {
       p.crit = (flags & 1) !== 0;
       p.fromCell = (flags & 2) !== 0;
       v.projectiles[i] = p;
-      o += PROJ;
+      o += FRAME.projectile;
     }
 
     v.fx.length = nF;
@@ -113,7 +107,7 @@ class Arena {
       f.t = dv.getFloat32(o + 12, true);
       f.value = dv.getFloat32(o + 16, true);
       v.fx[i] = f;
-      o += FX;
+      o += FRAME.fx;
     }
 
     return v;
@@ -200,7 +194,7 @@ function base64ToBytes(s) {
 }
 
 /** Idempotent: hot reload re-runs the module, and a second loop would double the frame rate. */
-export async function boot(canvasSelector, dotnet, hostConstants) {
+export async function boot(canvasSelector, dotnet, balance) {
   const canvas = document.querySelector(canvasSelector);
   if (!canvas) throw new Error(`no canvas at ${canvasSelector}`);
 
@@ -210,7 +204,8 @@ export async function boot(canvasSelector, dotnet, hostConstants) {
     return;
   }
 
-  if (hostConstants) checkConstants(hostConstants);
+  // Must happen before any painter exists: the species kits bake the radii into gradients.
+  applyBalance(balance);
 
   // The canvas measures text; a font swapping in mid-game would reflow every HUD label it draws.
   if (document.fonts?.ready) await document.fonts.ready;

@@ -1,4 +1,5 @@
 import { TAU, hash01 } from "./bioShapes.js";
+import { FADE, FX_LIFETIME } from "./constants.js";
 import { FONT, P, glowStops, hexRgb, radial } from "./palette.js";
 const HEAD_RGB = { cyan: P.cyanRgb, amber: P.amberRgb, enemy: hexRgb(P.enemy.ranged) };
 class FxPainter {
@@ -68,7 +69,7 @@ class FxPainter {
     ctx.textBaseline = "middle";
     ctx.lineJoin = "round";
     for (const f of world.fx) {
-      const a = Math.max(0, 1 - f.t / 1.2);
+      const a = Math.max(0, 1 - f.t / FX_LIFETIME);
       switch (f.kind) {
         case "kill": {
           ctx.strokeStyle = `rgba(200,255,250,${a * 0.8})`;
@@ -95,8 +96,8 @@ class FxPainter {
           break;
         }
         case "crit": {
-          if (f.t > 0.6) break;
-          const k = 1 - f.t / 0.6;
+          if (f.t > FADE.crit) break;
+          const k = 1 - f.t / FADE.crit;
           const y = f.y - 2 - f.t * 6;
           const txt = Math.round(f.value ?? 0).toString();
           ctx.font = `700 3.2px ${FONT}`;
@@ -108,8 +109,8 @@ class FxPainter {
           break;
         }
         case "hit": {
-          if (f.t > 0.25) break;
-          const k = 1 - f.t / 0.25;
+          if (f.t > FADE.hit) break;
+          const k = 1 - f.t / FADE.hit;
           ctx.fillStyle = `rgba(${P.dangerRgb},${k * 0.8})`;
           ctx.beginPath();
           ctx.arc(f.x, f.y, 0.8 + f.t * 3, 0, TAU);
@@ -118,7 +119,7 @@ class FxPainter {
           break;
         }
         case "atp": {
-          if (f.t > 1) break;
+          if (f.t > FADE.atp) break;
           const y = f.y - f.t * 8;
           const txt = `+${Math.round(f.value ?? 0)}`;
           ctx.font = `700 3.4px ${FONT}`;
@@ -136,7 +137,7 @@ class FxPainter {
   drawScreenFx(world, w, h) {
     let a = 0;
     for (const f of world.fx) {
-      if (f.kind === "boss-kill" && f.t < 0.3) a = Math.max(a, 0.08 * (1 - f.t / 0.3));
+      if (f.kind === "boss-kill" && f.t < FADE.bossFlash) a = Math.max(a, 0.08 * (1 - f.t / FADE.bossFlash));
     }
     if (a <= 0) return;
     this.ctx.fillStyle = `rgba(255,255,255,${a})`;

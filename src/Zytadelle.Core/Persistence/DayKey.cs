@@ -1,5 +1,3 @@
-using Zytadelle.Balancing.Curves;
-
 namespace Zytadelle.Core.Persistence;
 
 /// <summary>

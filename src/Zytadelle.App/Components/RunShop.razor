@@ -1,7 +1,7 @@
 @inherits GameComponent
 
 @* The in-culture shop. Prices here follow the levels bought during this culture, not the Gene Lab
-   level, so the two half-price opening levels are granted again inside every culture. *@
+   level, so each culture starts again at the ATP track's opening price. *@
 
 <div class="panel-title">
     <span>@Ui.TabLabel(Host.ShopTab)</span>
@@ -24,8 +24,8 @@
                      Cost="offer.Cost ?? 0"
                      Affordable="offer.Affordable"
                      Currency="atp"
-                     Current="@NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, offer.Level))"
-                     Next="@NumberFormat.Value(def.Fmt, UpgradeBalance.ValueAt(id, offer.Level + 1))"
+                     Current="@NumberFormat.Value(def.Fmt, GeneRegistry.ValueAt(id, offer.Level))"
+                     Next="@NumberFormat.Value(def.Fmt, GeneRegistry.ValueAt(id, offer.Level + 1))"
                      Flash="_lastBought == id"
                      OnClick="() => Buy(id)" />
     }
@@ -33,10 +33,10 @@
 
 @code {
     // A purchase bumps the card key, which recreates the element - that is what restarts the flash.
-    private readonly Dictionary<UpgradeId, int> _buys = [];
-    private UpgradeId? _lastBought;
+    private readonly Dictionary<GeneId, int> _buys = [];
+    private GeneId? _lastBought;
 
-    private int Bought(UpgradeId id) => _buys.GetValueOrDefault(id);
+    private int Bought(GeneId id) => _buys.GetValueOrDefault(id);
 
     private RunOffer Offer(UpgradeDef def) => Host.World is null
         ? new RunOffer(def, 0, null, false, false)
@@ -46,7 +46,7 @@
         ? ""
         : $"+{NumberFormat.Num(Step.PerMinute(Host.World.AtpWindow))} / min";
 
-    private void Buy(UpgradeId id)
+    private void Buy(GeneId id)
     {
         if (Host.BuyRun(id) != BuyResult.Bought) { return; }
         _buys[id] = Bought(id) + 1;

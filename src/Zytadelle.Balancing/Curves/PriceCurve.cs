@@ -1,12 +1,21 @@
 namespace Zytadelle.Balancing.Curves;
 
-/// <summary>A price track: the curve itself plus the brackets that jump it.</summary>
-public sealed class PriceCurve
+/// <summary>
+/// One uninterrupted power law: FirstCost * (1 + purchasedLevels / Ramp)^Exponent. No starter
+/// resets, bracket multipliers or tail segments.
+/// </summary>
+public sealed class PriceCurve(double firstCost, double ramp, double exponent)
 {
-    public required Curve Curve { get; init; }
+    /// <summary>Cost of the first purchase, already including the inexpensive opening.</summary>
+    public double FirstCost { get; init; } = firstCost;
 
-    public IReadOnlyList<Bracket>? Brackets { get; init; }
+    /// <summary>Opening length; larger values delay the steep part of the curve.</summary>
+    public double Ramp { get; init; } = ramp;
 
-    /// <summary>Price of buying from <paramref name="level"/> to <paramref name="level"/> + 1 (0-based).</summary>
-    public double CostAt(int level) => PricingBalance.CostAt(this, level);
+    /// <summary>Long-term price power; must exceed the value increment power for declining efficiency.</summary>
+    public double Exponent { get; init; } = exponent;
+
+    /// <summary>Rounded price of buying from <paramref name="level"/> to <paramref name="level"/> + 1 (0-based).</summary>
+    public double CostAt(int level) =>
+        Math.Max(1, JsMath.Round(FirstCost * Math.Pow(1 + Math.Max(0, level) / Ramp, Exponent)));
 }

@@ -1,4 +1,3 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Upgrades;
 
 namespace Zytadelle.Core.Sim;
@@ -19,22 +18,20 @@ public enum BuyResult
 public static class Purchase
 {
     /// <summary>
-    /// The price index is the level bought during *this culture*, not the total. Gene Lab levels do
-    /// not make in-culture purchases more expensive, which also means the two half-price starter
-    /// levels are granted a second time inside every culture. The maxed check does use the total.
+    /// The price index is the total level from the Gene Lab and this culture. A culture therefore
+    /// starts at the ATP price for the level following its permanent level.
     /// </summary>
-    public static RunOffer Offer(World w, UpgradeId id)
+    public static RunOffer Offer(World w, GeneId id)
     {
         var def = UpgradeCatalog.Def(id);
         var level = Stats.TotalLevel(w.Lab, w.Run, id);
-        var atpCurve = def.Curves.Atp;
-        var visible = atpCurve is not null && (def.UnlockDna == 0 || w.Unlocked.Contains(id));
-        var maxed = UpgradeBalance.IsMaxed(id, level);
-        double? cost = maxed || atpCurve is null ? null : atpCurve.CostAt(w.Run[id]);
+        var visible = def.BuyableInRun && (def.UnlockDna == 0 || w.Unlocked.Contains(id));
+        var maxed = GeneRegistry.IsMaxed(id, level);
+        double? cost = maxed || !def.BuyableInRun ? null : def.Gene.CostAt(level);
         return new RunOffer(def, level, cost, cost is not null && w.Atp >= cost, visible);
     }
 
-    public static BuyResult Buy(World w, UpgradeId id)
+    public static BuyResult Buy(World w, GeneId id)
     {
         var o = Offer(w, id);
         if (!o.Visible) return BuyResult.Locked;

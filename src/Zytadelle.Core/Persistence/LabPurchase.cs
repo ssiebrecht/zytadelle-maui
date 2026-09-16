@@ -1,4 +1,3 @@
-using Zytadelle.Balancing;
 using Zytadelle.Core.Upgrades;
 
 namespace Zytadelle.Core.Persistence;
@@ -22,24 +21,24 @@ public enum LabResult
 }
 
 /// <summary>
-/// The Gene Lab: permanent levels bought with DNA. The price index is the Gene Lab level, unlike
-/// the in-culture shop, which counts only what was bought during that culture.
+/// The Gene Lab: permanent levels bought with DNA. It uses the same per-gene price curve as the
+/// in-culture shop; the latter indexes it by permanent plus temporary levels.
 ///
 /// This is the only place DNA ever leaves a save - there is no refund and no respec - which is what
 /// lets <see cref="Spend"/> derive lifetime investment instead of counting it.
 /// </summary>
 public static class LabPurchase
 {
-    public static LabAction Action(SaveData s, UpgradeId id)
+    public static LabAction Action(SaveData s, GeneId id)
     {
         var def = UpgradeCatalog.Def(id);
         var level = s.Lab[id];
         if (def.UnlockDna > 0 && !s.Unlocked.Contains(id)) return new LabAction(LabActionKind.Unlock, def.UnlockDna, level);
-        if (UpgradeBalance.IsMaxed(id, level)) return new LabAction(LabActionKind.Maxed, 0, level);
-        return new LabAction(LabActionKind.Buy, def.Curves.Dna.CostAt(level), level);
+        if (GeneRegistry.IsMaxed(id, level)) return new LabAction(LabActionKind.Maxed, 0, level);
+        return new LabAction(LabActionKind.Buy, def.Gene.CostAt(level), level);
     }
 
-    public static LabResult Buy(SaveData s, UpgradeId id)
+    public static LabResult Buy(SaveData s, GeneId id)
     {
         var a = Action(s, id);
         if (a.Kind == LabActionKind.Maxed) return LabResult.Maxed;

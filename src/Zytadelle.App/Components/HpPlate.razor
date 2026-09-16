@@ -20,10 +20,10 @@
 
     /// <summary>
     /// Display threshold only: below this the plate turns red and the field picks up a danger pulse.
-    /// It changes how the state looks, never what the state is, so it is not a balance value - and the
-    /// renderer keeps its own copy of it for the pulse.
+    /// It changes how the state looks, never what the state is. The renderer reads the same number
+    /// off <see cref="RenderBalance"/>, so the plate and the dish always turn together.
     /// </summary>
-    private bool Low => Frac < 0.3;
+    private bool Low => Frac < RenderBalance.LowIntegrityFrac;
 
     private string Pct => (Frac * 100).ToString("0.##", CultureInfo.InvariantCulture);
 }

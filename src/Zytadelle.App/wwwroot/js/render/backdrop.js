@@ -1,5 +1,6 @@
 import { TAU, hash01, helixNodesPath, helixPath, helixRungsPath, makeParticles } from "./bioShapes.js";
 import { P, radial } from "./palette.js";
+import { LOW_INTEGRITY } from "./constants.js";
 function makeBokeh(n) {
   const out = [];
   for (let i = 0; i < n; i++) {
@@ -114,9 +115,9 @@ class Backdrop {
     this.drawHelices(ctx, w, h, time);
     this.drawMotes(ctx, cx, cy, big, time);
     const hpFrac = world.cell.hp / world.cell.maxHp;
-    if (hpFrac < 0.3) {
+    if (hpFrac < LOW_INTEGRITY) {
       const pulse = 0.5 + 0.5 * Math.sin(time * 8);
-      ctx.fillStyle = `rgba(${P.dangerRgb},${0.08 * pulse * (1 - hpFrac / 0.3)})`;
+      ctx.fillStyle = `rgba(${P.dangerRgb},${0.08 * pulse * (1 - hpFrac / LOW_INTEGRITY)})`;
       ctx.fillRect(0, 0, w, h);
     }
   }
