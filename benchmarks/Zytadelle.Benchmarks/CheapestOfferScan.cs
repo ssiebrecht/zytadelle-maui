@@ -2,9 +2,9 @@ namespace Zytadelle.Benchmarks;
 
 /// <summary>
 /// What <see cref="Zytadelle.Core.Tests.Determinism.CheapestAffordablePolicy"/> pays every decision
-/// point: nineteen <see cref="Purchase.Offer"/> calls, each a <see cref="RunOffer"/> allocation, to
-/// find the cheapest affordable gene. This is the cost the future simulator's policies pay on every
-/// purchase decision, independent of the tick loop itself.
+/// point: nineteen <see cref="Purchase.CostOf"/> calls to find the cheapest affordable gene. This is
+/// the cost the future simulator's policies pay on every purchase decision, independent of the tick
+/// loop itself.
 /// </summary>
 [MemoryDiagnoser]
 public class CheapestOfferScan
@@ -20,8 +20,8 @@ public class CheapestOfferScan
         var best = 0.0;
         foreach (var def in UpgradeCatalog.All)
         {
-            var offer = Purchase.Offer(_world, def.Id);
-            if (offer.Affordable && offer.Cost is { } cost) best += cost;
+            var cost = Purchase.CostOf(_world, def.Id);
+            if (cost is { } c && _world.Atp >= c) best += c;
         }
         return best;
     }

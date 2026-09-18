@@ -31,11 +31,38 @@ public static class Purchase
         return new RunOffer(def, level, cost, cost is not null && w.Atp >= cost, visible);
     }
 
-    public static BuyResult Buy(World w, GeneId id)
+    /// <summary>
+    /// The cost to buy this gene right now, or null if it is maxed or not buyable with ATP at all.
+    /// Deliberately independent of whether the gene has been unlocked yet - same as
+    /// <see cref="Offer"/>'s own Cost field, which carries that null-ness without folding in its
+    /// separate Visible field. A policy that scans every gene for the cheapest one used to pay one
+    /// <see cref="RunOffer"/> allocation per gene just to read two of its fields; this is that same
+    /// lookup with nothing else attached.
+    /// </summary>
+    public static double? CostOf(World w, GeneId id)
     {
-        var o = Offer(w, id);
-        if (!o.Visible) return BuyResult.Locked;
-        if (o.Cost is not { } cost) return BuyResult.Maxed;
+        var def = UpgradeCatalog.Def(id);
+        if (!def.BuyableInRun) return null;
+        var level = Stats.TotalLevel(w.Lab, w.Run, id);
+        return GeneRegistry.IsMaxed(id, level) ? null : def.Gene.CostAt(level);
+    }
+
+    /// <summary>
+    /// Same three-way check <see cref="Buy"/> always ran - Visible, then Cost, then Atp - just
+    /// without building a <see cref="RunOffer"/> first. Not built on <see cref="CostOf"/>: that
+    /// helper's null deliberately does not see Visible, but Locked has to be checked (and returned)
+    /// before Maxed, so the two conditions cannot share one collapsed null without losing that order.
+    /// </summary>
+    public static BuyResult TryBuy(World w, GeneId id)
+    {
+        var def = UpgradeCatalog.Def(id);
+        var visible = def.BuyableInRun && (def.UnlockDna == 0 || w.Unlocked.Contains(id));
+        if (!visible) return BuyResult.Locked;
+
+        var level = Stats.TotalLevel(w.Lab, w.Run, id);
+        if (GeneRegistry.IsMaxed(id, level)) return BuyResult.Maxed;
+
+        var cost = def.Gene.CostAt(level);
         if (w.Atp < cost) return BuyResult.Poor;
 
         w.Atp -= cost;
@@ -44,4 +71,6 @@ public static class Purchase
         w.RefreshStats();
         return BuyResult.Bought;
     }
+
+    public static BuyResult Buy(World w, GeneId id) => TryBuy(w, id);
 }

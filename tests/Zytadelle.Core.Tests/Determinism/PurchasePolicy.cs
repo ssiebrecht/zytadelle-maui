@@ -22,10 +22,10 @@ public sealed class CheapestAffordablePolicy(int everyTicks)
         var bestCost = double.PositiveInfinity;
         foreach (var def in UpgradeCatalog.All)
         {
-            var offer = Purchase.Offer(w, def.Id);
-            if (!offer.Affordable || offer.Cost is not { } cost || cost >= bestCost) continue;
+            var cost = Purchase.CostOf(w, def.Id);
+            if (cost is not { } c || w.Atp < c || c >= bestCost) continue;
             best = def.Id;
-            bestCost = cost;
+            bestCost = c;
         }
         return best is { } id && Purchase.Buy(w, id) == BuyResult.Bought;
     }
