@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using Zytadelle.Core.Engine;
 using Zytadelle.Core.Entities;
 using Zytadelle.Core.Upgrades;
@@ -63,14 +65,14 @@ public static class Combat
         if (w.Cell.FireCd > 0) return;
 
         var s = w.Stats;
-        var target = Targeting.NearestInRange(w.Enemies, s.Range);
-        if (target is null) return;
+        var targetIdx = Targeting.NearestInRange(w.Enemies, s.Range);
+        if (targetIdx < 0) return;
 
         // An assignment, not an accumulation: the overshoot is dropped, so the fire rate is quantised
         // to the tick. That is how the browser build behaved and the balance was fitted against it.
         w.Cell.FireCd = 1 / s.AttackSpeed;
 
-        SpawnToxin(w, target, RollDamage(s.Damage, s.CritChance, s.CritDamage, w.Rng), RollBounces(w, s));
+        SpawnToxin(w, targetIdx, RollDamage(s.Damage, s.CritChance, s.CritDamage, w.Rng), RollBounces(w, s));
 
         var extra = s.MultishotChance > 0 && w.Rng.Chance(s.MultishotChance)
             ? CombatBalance.MultishotExtraShots(s.MultishotTargets)
@@ -79,21 +81,22 @@ public static class Combat
 
         // Never two toxins on the same pathogen: with nothing else in reach the extra toxins are
         // simply not released, so a lone boss stays a pure damage check.
-        var taken = new List<int> { target.Id };
+        var taken = new List<int> { w.Enemies[targetIdx].Id };
         for (var i = 0; i < extra; i++)
         {
-            var next = Targeting.NearestFrom(w.Enemies, 0, 0, s.Range, taken);
-            if (next is null) break;
-            taken.Add(next.Id);
-            SpawnToxin(w, next, RollDamage(s.Damage, s.CritChance, s.CritDamage, w.Rng), RollBounces(w, s));
+            var nextIdx = Targeting.NearestFrom(w.Enemies, 0, 0, s.Range, taken);
+            if (nextIdx < 0) break;
+            taken.Add(w.Enemies[nextIdx].Id);
+            SpawnToxin(w, nextIdx, RollDamage(s.Damage, s.CritChance, s.CritDamage, w.Rng), RollBounces(w, s));
         }
     }
 
     private static int RollBounces(World w, Stats s) =>
         s.BounceChance > 0 && w.Rng.Chance(s.BounceChance) ? CombatBalance.BounceHops(s.BounceTargets) : 0;
 
-    private static void SpawnToxin(World w, Enemy target, (double Dmg, bool Crit) roll, int bounces)
+    private static void SpawnToxin(World w, int targetIndex, (double Dmg, bool Crit) roll, int bounces)
     {
+        var target = w.Enemies[targetIndex];
         var dx = target.X;
         var dy = target.Y;
         var d = Math.Sqrt(dx * dx + dy * dy);
@@ -109,7 +112,8 @@ public static class Combat
             Dmg = roll.Dmg,
             Crit = roll.Crit,
             FromCell = true,
-            Target = target,
+            TargetIndex = targetIndex,
+            TargetId = target.Id,
             Bounces = bounces,
             Hit = bounces > 0 ? [target.Id] : null,
             Life = CellBalance.ProjectileLifetime,
@@ -120,6 +124,44 @@ public static class Combat
     {
         if (w.Cell.Flash > 0) w.Cell.Flash -= dt;
         if (w.Cell.Hp < w.Cell.MaxHp) w.Cell.Hp = Math.Min(w.Cell.MaxHp, w.Cell.Hp + w.Stats.Regen * dt);
+    }
+
+    // ---------------------------------------------------------------- compaction
+
+    /// <summary>
+    /// Compacts w.Enemies in place - same stable-order semantics as the List.RemoveAll it replaces,
+    /// dead entries dropped, survivors keeping their relative order - and remaps every projectile's
+    /// TargetIndex to match: a still-alive target keeps being tracked at its new position, one that
+    /// died lands on -1, exactly as if a dangling reference had gone null. Always walks every
+    /// projectile when called, even ones that did not die this tick and even if none of them
+    /// target the pathogen that did: a compaction shifts survivors' positions regardless of which
+    /// specific enemy died, so the fixup cannot be narrowed any further than "ran at all".
+    /// </summary>
+    public static void CompactEnemies(World w)
+    {
+        var enemies = w.Enemies;
+        if (w.EnemyRemap.Length < enemies.Count) w.EnemyRemap = new int[enemies.Count];
+        var remap = w.EnemyRemap;
+
+        var write = 0;
+        for (var read = 0; read < enemies.Count; read++)
+        {
+            if (!enemies[read].Alive)
+            {
+                remap[read] = -1;
+                continue;
+            }
+            remap[read] = write;
+            if (write != read) enemies[write] = enemies[read];
+            write++;
+        }
+        enemies.RemoveRange(write, enemies.Count - write);
+
+        foreach (var p in w.Projectiles)
+        {
+            if (p.TargetIndex < 0) continue;
+            p.TargetIndex = remap[p.TargetIndex];
+        }
     }
 
     // ---------------------------------------------------------------- projectiles
@@ -146,13 +188,16 @@ public static class Combat
 
             if (p.FromCell)
             {
-                var t = p.Target;
-                if (t is null || !t.Alive)
+                var targetIdx = p.TargetIndex;
+                if (targetIdx < 0 || !w.Enemies[targetIdx].Alive)
                 {
                     p.Alive = false;
                     w.DeadProjectiles++;
                     continue;
                 }
+
+                var t = w.Enemies[targetIdx];
+                Debug.Assert(t.Id == p.TargetId, "TargetIndex/TargetId out of sync - a compaction remap bug.");
 
                 var dx = t.X - p.X;
                 var dy = t.Y - p.Y;
@@ -168,20 +213,22 @@ public static class Combat
                     }
                     DamageEnemy(w, t, p.Dmg);
 
-                    var next = p.Bounces > 0
+                    var nextIdx = p.Bounces > 0
                         ? Targeting.NearestFrom(w.Enemies, t.X, t.Y, w.Stats.BounceRange, p.Hit!)
-                        : null;
-                    if (next is null)
+                        : -1;
+                    if (nextIdx < 0)
                     {
                         p.Alive = false;
                         w.DeadProjectiles++;
                         continue;
                     }
 
+                    var next = w.Enemies[nextIdx];
                     p.Bounces--;
                     p.Hops++;
                     p.Hit!.Add(next.Id);
-                    p.Target = next;
+                    p.TargetIndex = nextIdx;
+                    p.TargetId = next.Id;
                     p.X = t.X;
                     p.Y = t.Y;
                     p.Life = Math.Max(p.Life, CellBalance.RicochetHopLifetime);

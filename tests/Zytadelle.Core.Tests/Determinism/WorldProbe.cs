@@ -72,7 +72,7 @@ public static class WorldProbe
             buf.F64(p.Dmg);
             buf.Bool(p.Crit);
             buf.Bool(p.FromCell);
-            buf.I32(p.Target?.Id ?? -1);
+            buf.I32(p.TargetId);
             buf.I32(p.Bounces);
             buf.I32(p.Hops);
             buf.F64(p.Life);

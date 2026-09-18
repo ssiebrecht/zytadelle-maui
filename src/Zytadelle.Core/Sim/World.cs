@@ -65,6 +65,11 @@ public sealed class World
     /// <summary>Same as <see cref="DeadEnemies"/>, for expired/landed/exhausted toxins and shots.</summary>
     public int DeadProjectiles;
 
+    /// <summary>Scratch buffer for <see cref="Sim.Combat.CompactEnemies"/>'s old-index to new-index
+    /// remap (-1 for a removed enemy). Reused across ticks so a busy culture does not allocate one
+    /// every compaction; grows if an unusually large enemy list ever needs a bigger one.</summary>
+    public int[] EnemyRemap = new int[SimulationBalance.MaxEnemies + 1];
+
     public required Cell Cell { get; init; }
 
     public double Atp;

@@ -56,8 +56,20 @@ public sealed class Projectile
     public bool Crit;
     public bool FromCell;
 
-    /// <summary>Toxins from the cell home onto a pathogen; shots at the cell fly straight.</summary>
-    public Enemy? Target;
+    /// <summary>
+    /// Index into World.Enemies as of the last assignment (a toxin from the cell homes onto a
+    /// pathogen; a shot at the cell flies straight and never sets this). -1 means no target -
+    /// either it never had one, or Combat.CompactEnemies remapped it there because the pathogen it
+    /// was tracking died. Valid only until the next enemy compaction, which either remaps it to
+    /// that pathogen's new position or clears it; never index into World.Enemies with it without
+    /// going through that remap first.
+    /// </summary>
+    public int TargetIndex = -1;
+
+    /// <summary>The same pathogen's stable identity, alongside <see cref="TargetIndex"/> - compaction
+    /// never touches this one, so it stays valid for the golden probe and the sanity assert in
+    /// <see cref="Sim.Combat.UpdateProjectiles"/> even across a remap.</summary>
+    public int TargetId = -1;
 
     /// <summary>Diffusion hops left. 0 means the toxin stops on its target.</summary>
     public int Bounces;

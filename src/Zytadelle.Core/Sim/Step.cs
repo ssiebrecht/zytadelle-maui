@@ -31,7 +31,7 @@ public static class Step
 
         if (w.DeadEnemies > 0)
         {
-            w.Enemies.RemoveAll(e => !e.Alive);
+            Combat.CompactEnemies(w);
             w.DeadEnemies = 0;
         }
         if (w.DeadProjectiles > 0)
