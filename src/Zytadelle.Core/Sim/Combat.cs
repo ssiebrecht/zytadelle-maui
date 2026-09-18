@@ -26,6 +26,7 @@ public static class Combat
     {
         if (!e.Alive) return;
         e.Alive = false;
+        w.DeadEnemies++;
         w.Kills++;
         w.KillsByKind = w.KillsByKind.With(e.Kind, w.KillsByKind.Of(e.Kind) + 1);
 
@@ -139,6 +140,7 @@ public static class Combat
             if (p.Life <= 0)
             {
                 p.Alive = false;
+                w.DeadProjectiles++;
                 continue;
             }
 
@@ -148,6 +150,7 @@ public static class Combat
                 if (t is null || !t.Alive)
                 {
                     p.Alive = false;
+                    w.DeadProjectiles++;
                     continue;
                 }
 
@@ -171,6 +174,7 @@ public static class Combat
                     if (next is null)
                     {
                         p.Alive = false;
+                        w.DeadProjectiles++;
                         continue;
                     }
 
@@ -195,6 +199,7 @@ public static class Combat
                 p.Y += p.Vy * dt;
                 if (Math.Sqrt(p.X * p.X + p.Y * p.Y) > CellBalance.Radius) continue;
                 p.Alive = false;
+                w.DeadProjectiles++;
                 DamageCell(w, p.Dmg);
                 w.PushFx(FxKind.Hit, p.X, p.Y);
             }

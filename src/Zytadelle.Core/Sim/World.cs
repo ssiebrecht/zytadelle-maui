@@ -34,6 +34,13 @@ public sealed class World
 
     public readonly List<Projectile> Projectiles = [];
 
+    /// <summary>Counts kills since the last compaction, so <see cref="Sim.Step.Run"/> can skip the
+    /// O(n) <c>RemoveAll</c> on the (usual) tick where nothing died.</summary>
+    public int DeadEnemies;
+
+    /// <summary>Same as <see cref="DeadEnemies"/>, for expired/landed/exhausted toxins and shots.</summary>
+    public int DeadProjectiles;
+
     public required Cell Cell { get; init; }
 
     public double Atp;

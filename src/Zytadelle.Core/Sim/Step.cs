@@ -27,8 +27,16 @@ public static class Step
 
         w.Time += dt;
 
-        w.Enemies.RemoveAll(e => !e.Alive);
-        w.Projectiles.RemoveAll(p => !p.Alive);
+        if (w.DeadEnemies > 0)
+        {
+            w.Enemies.RemoveAll(e => !e.Alive);
+            w.DeadEnemies = 0;
+        }
+        if (w.DeadProjectiles > 0)
+        {
+            w.Projectiles.RemoveAll(p => !p.Alive);
+            w.DeadProjectiles = 0;
+        }
 
         foreach (var f in w.Fx) f.T += dt;
         if (w.Fx.Count > 0 && w.Fx[0].T > SimulationBalance.FxLifetime)
