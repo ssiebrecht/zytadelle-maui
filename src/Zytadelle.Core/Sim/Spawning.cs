@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using Zytadelle.Core.Entities;
 
 namespace Zytadelle.Core.Sim;
@@ -21,31 +23,46 @@ public static class Spawning
     }
 
     /// <summary>
-    /// Puts one pathogen on the spawn circle. Above the cap nothing happens and no random number is
-    /// drawn, so a full field does not desynchronise the sequence.
+    /// Puts one pathogen on the spawn circle and returns its index in World.Enemies, or -1 above
+    /// the cap - where nothing happens and no random number is drawn, so a full field does not
+    /// desynchronise the sequence.
     /// </summary>
-    public static Enemy? Spawn(World w, EnemyKind kind)
+    public static int Spawn(World w, EnemyKind kind)
     {
-        if (w.Enemies.Count >= SimulationBalance.MaxEnemies) return null;
+        if (w.Enemies.Count >= SimulationBalance.MaxEnemies) return -1;
         var def = EnemyBalance.Def(kind);
         var ang = w.Rng.Next() * Math.PI * 2;
         var hp = def.Hp * w.HpAtC * w.Infection.HpMult;
-        var e = new Enemy
+
+        var index = w.Enemies.Count;
+        ref var e = ref w.Enemies.AddRef();
+        e.Id = w.NextId++;
+        e.Kind = kind;
+        e.X = Math.Cos(ang) * ArenaBalance.ArenaRadius;
+        e.Y = Math.Sin(ang) * ArenaBalance.ArenaRadius;
+        e.Hp = hp;
+        e.MaxHp = hp;
+        e.Atk = def.Atk * w.AtkAtC * w.Infection.AtkMult;
+        e.Speed = def.Speed * EnemyBalance.SpeedMult
+                  * w.Rng.Range(EnemyBalance.SpeedJitterMin, EnemyBalance.SpeedJitterMax);
+        e.Radius = def.Radius;
+        e.SpawnCycle = w.Cycle;
+        e.AttackInterval = def.AttackInterval;
+        e.Dna = def.Dna;
+        e.IsRanged = def.Ranged is not null;
+        if (def.Ranged is { } ranged)
         {
-            Id = w.NextId++,
-            Kind = kind,
-            Def = def,
-            X = Math.Cos(ang) * ArenaBalance.ArenaRadius,
-            Y = Math.Sin(ang) * ArenaBalance.ArenaRadius,
-            Hp = hp,
-            MaxHp = hp,
-            Atk = def.Atk * w.AtkAtC * w.Infection.AtkMult,
-            Speed = def.Speed * EnemyBalance.SpeedMult
-                    * w.Rng.Range(EnemyBalance.SpeedJitterMin, EnemyBalance.SpeedJitterMax),
-            Radius = def.Radius,
-            SpawnCycle = w.Cycle,
-        };
-        w.Enemies.Add(e);
-        return e;
+            e.RangeFrac = ranged.RangeFrac;
+            e.Windup = ranged.Windup;
+            e.ProjectileSpeed = ranged.ProjectileSpeed;
+        }
+
+        // Struct defaults are 0/false, not the class field initializers they replace - both must
+        // be set explicitly on every spawn, never left to a default.
+        e.DmgMult = CombatBalance.HeatupBase;
+        e.Alive = true;
+        Debug.Assert(e.Alive && e.DmgMult == CombatBalance.HeatupBase, "Enemy spawned without its required explicit fields.");
+
+        return index;
     }
 }

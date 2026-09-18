@@ -52,8 +52,12 @@ public static class Cycles
         // Centred, so exactly one cycle's worth of pathogens fits into the spawn phase.
         w.SpawnTimer = w.SpawnIntervalC * CycleBalance.SpawnTrainOffset;
         if (!CycleBalance.IsBossCycle(w.Cycle)) return;
-        var b = Spawning.Spawn(w, EnemyKind.Boss);
-        if (b is not null) w.PushFx(FxKind.Hit, b.X, b.Y);
+        var bi = Spawning.Spawn(w, EnemyKind.Boss);
+        if (bi >= 0)
+        {
+            var b = w.Enemies[bi];
+            w.PushFx(FxKind.Hit, b.X, b.Y);
+        }
     }
 
     private static void OnCycleEnd(World w)

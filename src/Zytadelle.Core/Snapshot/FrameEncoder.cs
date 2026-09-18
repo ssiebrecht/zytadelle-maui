@@ -64,7 +64,7 @@ public static class FrameEncoder
         var o = HeaderSize;
         for (var i = 0; i < enemyCount; i++)
         {
-            var e = w.Enemies[i];
+            ref readonly var e = ref w.Enemies[i];
             BinaryPrimitives.WriteInt32LittleEndian(b[o..], e.Id);
             b[o + 4] = (byte)e.Kind;
             b[o + 5] = e.Arrived ? (byte)1 : (byte)0;
@@ -78,13 +78,13 @@ public static class FrameEncoder
             WriteF32(b, o + 28, e.Flash);
             WriteF32(b, o + 32, e.DmgMult);
             WriteF32(b, o + 36, e.AttackCd);
-            WriteF32(b, o + 40, e.Def.AttackInterval);
+            WriteF32(b, o + 40, e.AttackInterval);
             o += EnemySize;
         }
 
         for (var i = 0; i < projCount; i++)
         {
-            var p = w.Projectiles[i];
+            ref readonly var p = ref w.Projectiles[i];
             WriteF32(b, o, p.X);
             WriteF32(b, o + 4, p.Y);
             WriteF32(b, o + 8, p.Vx);

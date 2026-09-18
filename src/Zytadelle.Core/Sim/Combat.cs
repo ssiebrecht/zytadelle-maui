@@ -16,15 +16,15 @@ public static class Combat
         return (CombatBalance.ApplyCrit(baseDmg, critDamage, crit), crit);
     }
 
-    public static void DamageEnemy(World w, Enemy e, double dmg)
+    public static void DamageEnemy(World w, ref Enemy e, double dmg)
     {
         if (!e.Alive) return;
         e.Hp -= dmg;
         e.Flash = RenderBalance.EnemyFlash;
-        if (e.Hp <= 0) Kill(w, e);
+        if (e.Hp <= 0) Kill(w, ref e);
     }
 
-    public static void Kill(World w, Enemy e)
+    public static void Kill(World w, ref Enemy e)
     {
         if (!e.Alive) return;
         e.Alive = false;
@@ -35,7 +35,7 @@ public static class Combat
         var atp = w.BaseAtpPerKillC * w.Stats.AtpBonus;
         w.Atp += atp;
         w.AtpEarned += atp;
-        w.Dna += EconomyBalance.DnaForKill(e.Def.Dna, e.SpawnCycle, w.Cycle, w.Stats.DnaPerKill, w.Infection.DnaMult);
+        w.Dna += EconomyBalance.DnaForKill(e.Dna, e.SpawnCycle, w.Cycle, w.Stats.DnaPerKill, w.Infection.DnaMult);
 
         w.PushFx(e.Kind == EnemyKind.Boss ? FxKind.BossKill : FxKind.Kill, e.X, e.Y, atp);
     }
@@ -65,7 +65,7 @@ public static class Combat
         if (w.Cell.FireCd > 0) return;
 
         var s = w.Stats;
-        var targetIdx = Targeting.NearestInRange(w.Enemies, s.Range);
+        var targetIdx = Targeting.NearestInRange(w.Enemies.AsSpan(), s.Range);
         if (targetIdx < 0) return;
 
         // An assignment, not an accumulation: the overshoot is dropped, so the fire rate is quantised
@@ -88,7 +88,7 @@ public static class Combat
         var takenCount = 1;
         for (var i = 0; i < extra; i++)
         {
-            var nextIdx = Targeting.NearestFrom(w.Enemies, 0, 0, s.Range, taken.AsSpan(0, takenCount));
+            var nextIdx = Targeting.NearestFrom(w.Enemies.AsSpan(), 0, 0, s.Range, taken.AsSpan(0, takenCount));
             if (nextIdx < 0) break;
             taken[takenCount++] = w.Enemies[nextIdx].Id;
             SpawnToxin(w, nextIdx, RollDamage(s.Damage, s.CritChance, s.CritDamage, w.Rng), RollBounces(w, s));
@@ -100,7 +100,7 @@ public static class Combat
 
     private static void SpawnToxin(World w, int targetIndex, (double Dmg, bool Crit) roll, int bounces)
     {
-        var target = w.Enemies[targetIndex];
+        ref readonly var target = ref w.Enemies[targetIndex];
         var dx = target.X;
         var dy = target.Y;
         var d = Math.Sqrt(dx * dx + dy * dy);
@@ -115,24 +115,25 @@ public static class Combat
             w.HitSlab.Set(hitSlot, 0, target.Id);
         }
 
-        w.Projectiles.Add(new Projectile
-        {
-            Id = w.NextId++,
-            X = dx / d * CellBalance.Radius,
-            Y = dy / d * CellBalance.Radius,
-            Vx = dx / d * CellBalance.ProjectileSpeed,
-            Vy = dy / d * CellBalance.ProjectileSpeed,
-            Speed = CellBalance.ProjectileSpeed,
-            Dmg = roll.Dmg,
-            Crit = roll.Crit,
-            FromCell = true,
-            TargetIndex = targetIndex,
-            TargetId = target.Id,
-            Bounces = bounces,
-            HitSlot = hitSlot,
-            HitCount = bounces > 0 ? 1 : 0,
-            Life = CellBalance.ProjectileLifetime,
-        });
+        ref var proj = ref w.Projectiles.AddRef();
+        proj.Id = w.NextId++;
+        proj.X = dx / d * CellBalance.Radius;
+        proj.Y = dy / d * CellBalance.Radius;
+        proj.Vx = dx / d * CellBalance.ProjectileSpeed;
+        proj.Vy = dy / d * CellBalance.ProjectileSpeed;
+        proj.Speed = CellBalance.ProjectileSpeed;
+        proj.Dmg = roll.Dmg;
+        proj.Crit = roll.Crit;
+        proj.FromCell = true;
+        proj.TargetIndex = targetIndex;
+        proj.TargetId = target.Id;
+        proj.Bounces = bounces;
+        proj.HitSlot = hitSlot;
+        proj.HitCount = bounces > 0 ? 1 : 0;
+        proj.Life = CellBalance.ProjectileLifetime;
+        // Struct default is false, not the class field initializer it replaces.
+        proj.Alive = true;
+        Debug.Assert(proj.Alive, "Projectile spawned without its required explicit Alive=true.");
     }
 
     public static void UpdateRegen(World w, double dt)
@@ -144,35 +145,21 @@ public static class Combat
     // ---------------------------------------------------------------- compaction
 
     /// <summary>
-    /// Compacts w.Enemies in place - same stable-order semantics as the List.RemoveAll it replaces,
-    /// dead entries dropped, survivors keeping their relative order - and remaps every projectile's
-    /// TargetIndex to match: a still-alive target keeps being tracked at its new position, one that
-    /// died lands on -1, exactly as if a dangling reference had gone null. Always walks every
-    /// projectile when called, even ones that did not die this tick and even if none of them
-    /// target the pathogen that did: a compaction shifts survivors' positions regardless of which
-    /// specific enemy died, so the fixup cannot be narrowed any further than "ran at all".
+    /// Compacts w.Enemies in place - same stable-order semantics as the List.RemoveAll it used to
+    /// be - and remaps every projectile's TargetIndex to match: a still-alive target keeps being
+    /// tracked at its new position, one that died lands on -1, exactly as if a dangling reference
+    /// had gone null. Always walks every projectile when called, even ones that did not die this
+    /// tick and even if none of them target the pathogen that did: a compaction shifts survivors'
+    /// positions regardless of which specific enemy died, so the fixup cannot be narrowed any
+    /// further than "ran at all".
     /// </summary>
     public static void CompactEnemies(World w)
     {
-        var enemies = w.Enemies;
-        if (w.EnemyRemap.Length < enemies.Count) w.EnemyRemap = new int[enemies.Count];
-        var remap = w.EnemyRemap;
+        if (w.EnemyRemap.Length < w.Enemies.Count) w.EnemyRemap = new int[w.Enemies.Count];
+        var remap = w.EnemyRemap.AsSpan(0, w.Enemies.Count);
+        w.Enemies.Compact(remap);
 
-        var write = 0;
-        for (var read = 0; read < enemies.Count; read++)
-        {
-            if (!enemies[read].Alive)
-            {
-                remap[read] = -1;
-                continue;
-            }
-            remap[read] = write;
-            if (write != read) enemies[write] = enemies[read];
-            write++;
-        }
-        enemies.RemoveRange(write, enemies.Count - write);
-
-        foreach (var p in w.Projectiles)
+        foreach (ref var p in w.Projectiles.AsSpan())
         {
             if (p.TargetIndex < 0) continue;
             p.TargetIndex = remap[p.TargetIndex];
@@ -184,7 +171,7 @@ public static class Combat
     /// <summary>Kills a projectile and returns its hit-list slot (if it rented one) to the slab -
     /// the one place that does both, so a death site can never free a projectile without freeing
     /// what it was renting, or vice versa.</summary>
-    private static void KillProjectile(World w, Projectile p)
+    private static void KillProjectile(World w, ref Projectile p)
     {
         p.Alive = false;
         w.DeadProjectiles++;
@@ -202,13 +189,13 @@ public static class Combat
     {
         for (var i = 0; i < w.Projectiles.Count; i++)
         {
-            var p = w.Projectiles[i];
+            ref var p = ref w.Projectiles[i];
             if (!p.Alive) continue;
 
             p.Life -= dt;
             if (p.Life <= 0)
             {
-                KillProjectile(w, p);
+                KillProjectile(w, ref p);
                 continue;
             }
 
@@ -217,11 +204,11 @@ public static class Combat
                 var targetIdx = p.TargetIndex;
                 if (targetIdx < 0 || !w.Enemies[targetIdx].Alive)
                 {
-                    KillProjectile(w, p);
+                    KillProjectile(w, ref p);
                     continue;
                 }
 
-                var t = w.Enemies[targetIdx];
+                ref var t = ref w.Enemies[targetIdx];
                 Debug.Assert(t.Id == p.TargetId, "TargetIndex/TargetId out of sync - a compaction remap bug.");
 
                 var dx = t.X - p.X;
@@ -236,18 +223,18 @@ public static class Combat
                         if (p.Hops == 0) w.Crits++;
                         w.PushFx(FxKind.Crit, t.X, t.Y, p.Dmg);
                     }
-                    DamageEnemy(w, t, p.Dmg);
+                    DamageEnemy(w, ref t, p.Dmg);
 
                     var nextIdx = p.Bounces > 0
-                        ? Targeting.NearestFrom(w.Enemies, t.X, t.Y, w.Stats.BounceRange, w.HitSlab.Span(p.HitSlot, p.HitCount))
+                        ? Targeting.NearestFrom(w.Enemies.AsSpan(), t.X, t.Y, w.Stats.BounceRange, w.HitSlab.Span(p.HitSlot, p.HitCount))
                         : -1;
                     if (nextIdx < 0)
                     {
-                        KillProjectile(w, p);
+                        KillProjectile(w, ref p);
                         continue;
                     }
 
-                    var next = w.Enemies[nextIdx];
+                    ref var next = ref w.Enemies[nextIdx];
                     p.Bounces--;
                     p.Hops++;
                     w.HitSlab.Set(p.HitSlot, p.HitCount, next.Id);
@@ -270,7 +257,7 @@ public static class Combat
                 p.X += p.Vx * dt;
                 p.Y += p.Vy * dt;
                 if (Math.Sqrt(p.X * p.X + p.Y * p.Y) > CellBalance.Radius) continue;
-                KillProjectile(w, p);
+                KillProjectile(w, ref p);
                 DamageCell(w, p.Dmg);
                 w.PushFx(FxKind.Hit, p.X, p.Y);
             }
@@ -288,7 +275,7 @@ public static class Combat
     {
         for (var i = 0; i < w.Enemies.Count; i++)
         {
-            var e = w.Enemies[i];
+            ref var e = ref w.Enemies[i];
             if (!e.Alive) continue;
 
             if (e.Flash > 0) e.Flash -= dt;
@@ -296,9 +283,8 @@ public static class Combat
 
             var d = Math.Sqrt(e.X * e.X + e.Y * e.Y);
             if (d == 0) d = 1;
-            var ranged = e.Def.Ranged;
-            var stopDist = ranged is not null
-                ? w.Stats.Range * ranged.RangeFrac
+            var stopDist = e.IsRanged
+                ? w.Stats.Range * e.RangeFrac
                 : CellBalance.Radius + e.Radius;
 
             if (d > stopDist)
@@ -312,40 +298,46 @@ public static class Combat
             if (!e.Arrived)
             {
                 e.Arrived = true;
-                if (ranged is not null) e.AttackCd = ranged.Windup;
+                if (e.IsRanged) e.AttackCd = e.Windup;
             }
 
             if (e.AttackCd > 0) continue;
 
-            e.AttackCd = e.Def.AttackInterval;
-            if (ranged is not null) Shoot(w, e); else HitCell(w, e);
+            e.AttackCd = e.AttackInterval;
+            if (e.IsRanged) Shoot(w, ref e); else HitCell(w, ref e);
             if (w.Dead) return;
         }
     }
 
-    private static void HitCell(World w, Enemy e)
+    private static void HitCell(World w, ref Enemy e)
     {
         DamageCell(w, e.Atk * e.DmgMult);
         w.PushFx(FxKind.Hit, e.X, e.Y);
         e.DmgMult += CombatBalance.HeatupPerHit;
     }
 
-    private static void Shoot(World w, Enemy e)
+    private static void Shoot(World w, ref Enemy e)
     {
         var d = Math.Sqrt(e.X * e.X + e.Y * e.Y);
         if (d == 0) d = 1;
-        var spd = e.Def.Ranged?.ProjectileSpeed ?? EnemyBalance.ProjectileFallbackSpeed;
-        w.Projectiles.Add(new Projectile
-        {
-            Id = w.NextId++,
-            X = e.X,
-            Y = e.Y,
-            Vx = -e.X / d * spd,
-            Vy = -e.Y / d * spd,
-            Speed = spd,
-            Dmg = e.Atk * e.DmgMult,
-            Life = EnemyBalance.ProjectileLifetime,
-        });
+        var spd = e.IsRanged ? e.ProjectileSpeed : EnemyBalance.ProjectileFallbackSpeed;
+
+        ref var proj = ref w.Projectiles.AddRef();
+        proj.Id = w.NextId++;
+        proj.X = e.X;
+        proj.Y = e.Y;
+        proj.Vx = -e.X / d * spd;
+        proj.Vy = -e.Y / d * spd;
+        proj.Speed = spd;
+        proj.Dmg = e.Atk * e.DmgMult;
+        proj.Life = EnemyBalance.ProjectileLifetime;
+        // This shot never has a target to track - explicit -1, since the struct default is 0.
+        proj.TargetIndex = -1;
+        proj.TargetId = -1;
+        proj.HitSlot = -1;
+        proj.Alive = true;
+        Debug.Assert(proj.Alive, "Projectile spawned without its required explicit Alive=true.");
+
         e.DmgMult += CombatBalance.HeatupPerHit;
     }
 }

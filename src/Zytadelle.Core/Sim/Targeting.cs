@@ -3,7 +3,7 @@ using Zytadelle.Core.Entities;
 namespace Zytadelle.Core.Sim;
 
 /// <summary>
-/// Who the cell shoots at, and where a diffusing toxin goes next. Returns an index into the list
+/// Who the cell shoots at, and where a diffusing toxin goes next. Returns an index into the span
 /// passed in (or -1 for "nobody"), not a reference - callers hold onto it as
 /// <see cref="Projectile.TargetIndex"/>, valid only until the next enemy compaction.
 ///
@@ -14,13 +14,13 @@ namespace Zytadelle.Core.Sim;
 public static class Targeting
 {
     /// <summary>Index of the nearest living pathogen within range of the cell, or -1.</summary>
-    public static int NearestInRange(List<Enemy> enemies, double range)
+    public static int NearestInRange(ReadOnlySpan<Enemy> enemies, double range)
     {
         var best = -1;
         var bestD = range * range;
-        for (var i = 0; i < enemies.Count; i++)
+        for (var i = 0; i < enemies.Length; i++)
         {
-            var e = enemies[i];
+            ref readonly var e = ref enemies[i];
             if (!e.Alive) continue;
             var d = e.X * e.X + e.Y * e.Y;
             if (d > bestD) continue;
@@ -32,13 +32,13 @@ public static class Targeting
 
     /// <summary>Index of the nearest living pathogen within range of a point, skipping the ones
     /// already hit, or -1.</summary>
-    public static int NearestFrom(List<Enemy> enemies, double x, double y, double range, ReadOnlySpan<int> skip)
+    public static int NearestFrom(ReadOnlySpan<Enemy> enemies, double x, double y, double range, ReadOnlySpan<int> skip)
     {
         var best = -1;
         var bestD = range * range;
-        for (var i = 0; i < enemies.Count; i++)
+        for (var i = 0; i < enemies.Length; i++)
         {
-            var e = enemies[i];
+            ref readonly var e = ref enemies[i];
             if (!e.Alive || skip.Contains(e.Id)) continue;
             var dx = e.X - x;
             var dy = e.Y - y;

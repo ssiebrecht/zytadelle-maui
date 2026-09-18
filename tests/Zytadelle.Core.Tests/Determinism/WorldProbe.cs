@@ -43,7 +43,7 @@ public static class WorldProbe
         buf.U32(w.Rng.State);
 
         buf.I32(w.Enemies.Count);
-        foreach (var e in w.Enemies)
+        foreach (ref readonly var e in w.Enemies.AsSpan())
         {
             buf.I32(e.Id);
             buf.I32((int)e.Kind);
@@ -61,7 +61,7 @@ public static class WorldProbe
         }
 
         buf.I32(w.Projectiles.Count);
-        foreach (var p in w.Projectiles)
+        foreach (ref readonly var p in w.Projectiles.AsSpan())
         {
             buf.I32(p.Id);
             buf.F64(p.X);

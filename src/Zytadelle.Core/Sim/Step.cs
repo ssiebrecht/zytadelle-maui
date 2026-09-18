@@ -36,7 +36,7 @@ public static class Step
         }
         if (w.DeadProjectiles > 0)
         {
-            w.Projectiles.RemoveAll(p => !p.Alive);
+            w.Projectiles.Compact();
             w.DeadProjectiles = 0;
         }
 

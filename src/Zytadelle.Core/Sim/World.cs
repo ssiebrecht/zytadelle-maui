@@ -54,9 +54,9 @@ public sealed class World
     public double BaseAtpPerKillC;
 
     /// <summary>Append-only within a tick, compacted at the end. The order is part of the state.</summary>
-    public readonly List<Enemy> Enemies = [];
+    public readonly StructList<Enemy> Enemies = new(SimulationBalance.MaxEnemies + 1);
 
-    public readonly List<Projectile> Projectiles = [];
+    public readonly StructList<Projectile> Projectiles = new(256);
 
     /// <summary>Counts kills since the last compaction, so <see cref="Sim.Step.Run"/> can skip the
     /// O(n) <c>RemoveAll</c> on the (usual) tick where nothing died.</summary>
