@@ -29,8 +29,12 @@ public static class ScenarioRunner
 
     /// <summary><paramref name="recordFx"/>/<paramref name="trackIncome"/> exist for
     /// <c>RenderFlagsTests</c>: a headless run flips them off, and the resulting hash must still
-    /// match a rendering run bit for bit, since neither is read by <see cref="WorldProbe"/>.</summary>
-    public static ScenarioResult Run(Scenario scenario, bool recordFx = true, bool trackIncome = true)
+    /// match a rendering run bit for bit, since neither is read by <see cref="WorldProbe"/>.
+    /// <paramref name="onTick"/> exists for <c>BalanceRevisionCacheTests</c>: it runs after every
+    /// <see cref="Step.Run"/>, so a test can inject a mid-run <see cref="BalanceRevision.Bump"/>
+    /// at an exact tick without hand-rolling a second copy of this loop.</summary>
+    public static ScenarioResult Run(
+        Scenario scenario, bool recordFx = true, bool trackIncome = true, Action<World, int>? onTick = null)
     {
         var w = scenario.CreateWorld();
         w.RecordFx = recordFx;
@@ -53,6 +57,7 @@ public static class ScenarioRunner
             policy?.Apply(w);
             Step.Run(w, SimulationBalance.FixedDt);
             tick++;
+            onTick?.Invoke(w, tick);
 
             buf.Reset();
             WorldProbe.Write(w, buf);

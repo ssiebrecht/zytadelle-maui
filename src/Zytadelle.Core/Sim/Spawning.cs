@@ -11,11 +11,10 @@ public static class Spawning
     /// </summary>
     public static EnemyKind PickKind(World w)
     {
-        var weights = SpawnBalance.Weights(w.Cycle);
-        var r = w.Rng.Next() * weights.Sum;
+        var r = w.Rng.Next() * w.WeightsSumC;
         foreach (var k in SpawnBalance.SpawnKinds)
         {
-            r -= weights.Of(k);
+            r -= w.WeightsC.Of(k);
             if (r <= 0) return k;
         }
         return EnemyKind.Basic;
@@ -30,7 +29,7 @@ public static class Spawning
         if (w.Enemies.Count >= SimulationBalance.MaxEnemies) return null;
         var def = EnemyBalance.Def(kind);
         var ang = w.Rng.Next() * Math.PI * 2;
-        var hp = def.Hp * EnemyScalingBalance.BasicHpAt(w.Cycle) * w.Infection.HpMult;
+        var hp = def.Hp * w.HpAtC * w.Infection.HpMult;
         var e = new Enemy
         {
             Id = w.NextId++,
@@ -40,7 +39,7 @@ public static class Spawning
             Y = Math.Sin(ang) * ArenaBalance.ArenaRadius,
             Hp = hp,
             MaxHp = hp,
-            Atk = def.Atk * EnemyScalingBalance.BasicAtkAt(w.Cycle) * w.Infection.AtkMult,
+            Atk = def.Atk * w.AtkAtC * w.Infection.AtkMult,
             Speed = def.Speed * EnemyBalance.SpeedMult
                     * w.Rng.Range(EnemyBalance.SpeedJitterMin, EnemyBalance.SpeedJitterMax),
             Radius = def.Radius,

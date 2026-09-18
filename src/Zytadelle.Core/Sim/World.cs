@@ -29,6 +29,30 @@ public sealed class World
 
     public double SpawnTimer;
 
+    /// <summary>
+    /// The per-cycle-pure part of spawning and kill payout, refreshed by
+    /// <see cref="Sim.Cycles.EnsureCache"/> whenever <see cref="CacheCycle"/> falls behind
+    /// <see cref="Cycle"/> or <see cref="CacheRevision"/> falls behind <see cref="BalanceRevision.Current"/>.
+    /// Each field is one pure sub-expression of a larger formula, never a pre-multiplied combination
+    /// of two - the arithmetic that reads it stays byte-for-byte the same operation order as before,
+    /// just with the cycle-only part computed once per cycle instead of on every call.
+    /// </summary>
+    public int CacheCycle = -1;
+
+    public int CacheRevision = -1;
+
+    public double SpawnIntervalC;
+
+    public SpawnMix WeightsC;
+
+    public double WeightsSumC;
+
+    public double HpAtC;
+
+    public double AtkAtC;
+
+    public double BaseAtpPerKillC;
+
     /// <summary>Append-only within a tick, compacted at the end. The order is part of the state.</summary>
     public readonly List<Enemy> Enemies = [];
 
@@ -104,6 +128,10 @@ public sealed class World
             Atp = stats.StartAtp,
         };
         w.Stats = stats;
+        // Warms the per-cycle cache before the first tick - and before any direct Spawning.Spawn
+        // call a caller might make without ever running a tick, such as a benchmark that spawns
+        // straight into a fresh World.
+        Cycles.EnsureCache(w);
         return w;
     }
 

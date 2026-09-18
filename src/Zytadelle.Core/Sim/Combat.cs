@@ -30,7 +30,7 @@ public static class Combat
         w.Kills++;
         w.KillsByKind = w.KillsByKind.With(e.Kind, w.KillsByKind.Of(e.Kind) + 1);
 
-        var atp = EconomyBalance.AtpForKill(w.Cycle, w.Stats.AtpBonus);
+        var atp = w.BaseAtpPerKillC * w.Stats.AtpBonus;
         w.Atp += atp;
         w.AtpEarned += atp;
         w.Dna += EconomyBalance.DnaForKill(e.Def.Dna, e.SpawnCycle, w.Cycle, w.Stats.DnaPerKill, w.Infection.DnaMult);
