@@ -72,7 +72,17 @@ public sealed class World
     /// <summary>Monotonic entity id, shared by pathogens and toxins. Never reused.</summary>
     public int NextId = 1;
 
-    public readonly List<FxEvent> Fx = [];
+    /// <summary>
+    /// Off for a headless run that never renders, to skip work nothing reads back: the simulation's
+    /// own determinism hash never reads Fx or the income windows, only the render-only probe does -
+    /// so flipping either can never change what a culture becomes (see the golden test suite's
+    /// Determinism/RenderFlagsTests, which asserts exactly that).
+    /// </summary>
+    public bool RecordFx = true;
+
+    public bool TrackIncome = true;
+
+    public readonly FxRing Fx = new(SimulationBalance.FxRingCap);
 
     /// <summary>One sample per simulated second, for the per-minute readouts.</summary>
     public readonly RateWindow AtpWindow = new(SimulationBalance.RateWindowSeconds);
@@ -114,8 +124,7 @@ public sealed class World
 
     public void PushFx(FxKind kind, double x, double y, double value = 0)
     {
-        if (Fx.Count > SimulationBalance.FxRingCap) Fx.RemoveAt(0);
-        Fx.Add(new FxEvent { Kind = kind, X = x, Y = y, Value = value });
+        if (RecordFx) Fx.Push(kind, x, y, value);
     }
 }
 

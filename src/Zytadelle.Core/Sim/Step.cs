@@ -40,12 +40,13 @@ public static class Step
             w.DeadProjectiles = 0;
         }
 
-        foreach (var f in w.Fx) f.T += dt;
-        if (w.Fx.Count > 0 && w.Fx[0].T > SimulationBalance.FxLifetime)
-            w.Fx.RemoveAll(f => f.T > SimulationBalance.FxLifetime);
+        if (w.RecordFx) w.Fx.Age(dt);
 
-        TrackRate(w.AtpWindow, w.Atp - atpBefore, w.Time, dt);
-        TrackRate(w.DnaWindow, w.Dna - dnaBefore, w.Time, dt);
+        if (w.TrackIncome)
+        {
+            TrackRate(w.AtpWindow, w.Atp - atpBefore, w.Time, dt);
+            TrackRate(w.DnaWindow, w.Dna - dnaBefore, w.Time, dt);
+        }
     }
 
     /// <summary>One sample per simulated second, in a ring the per-minute readouts average over.</summary>

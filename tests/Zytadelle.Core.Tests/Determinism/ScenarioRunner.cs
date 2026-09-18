@@ -27,9 +27,14 @@ public static class ScenarioRunner
     /// <summary>Generous multiple of the longest scenario in the matrix - a real runaway trips this, not the cap.</summary>
     private const int MaxTicksGuard = 5_000_000;
 
-    public static ScenarioResult Run(Scenario scenario)
+    /// <summary><paramref name="recordFx"/>/<paramref name="trackIncome"/> exist for
+    /// <c>RenderFlagsTests</c>: a headless run flips them off, and the resulting hash must still
+    /// match a rendering run bit for bit, since neither is read by <see cref="WorldProbe"/>.</summary>
+    public static ScenarioResult Run(Scenario scenario, bool recordFx = true, bool trackIncome = true)
     {
         var w = scenario.CreateWorld();
+        w.RecordFx = recordFx;
+        w.TrackIncome = trackIncome;
         var policy = scenario.PolicyEveryTicks is { } every ? new CheapestAffordablePolicy(every) : null;
 
         var worldHash = new StateHasher();
