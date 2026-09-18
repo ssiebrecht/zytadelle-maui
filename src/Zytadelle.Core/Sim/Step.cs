@@ -1,3 +1,5 @@
+using Zytadelle.Core.Engine;
+
 namespace Zytadelle.Core.Sim;
 
 public static class Step
@@ -47,16 +49,12 @@ public static class Step
     }
 
     /// <summary>One sample per simulated second, in a ring the per-minute readouts average over.</summary>
-    private static void TrackRate(List<double> win, double delta, double time, double dt)
+    private static void TrackRate(RateWindow win, double delta, double time, double dt)
     {
         var idx = (int)Math.Floor(time);
         var prevIdx = (int)Math.Floor(time - dt);
-        if (win.Count == 0 || idx != prevIdx)
-        {
-            win.Add(0);
-            if (win.Count > SimulationBalance.RateWindowSeconds) win.RemoveAt(0);
-        }
-        win[^1] += delta;
+        if (win.Count == 0 || idx != prevIdx) win.AddSample();
+        win.Last += delta;
     }
 
     /// <summary>Sum of a tracked window, scaled to per minute.</summary>

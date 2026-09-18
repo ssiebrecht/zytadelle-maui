@@ -75,9 +75,9 @@ public sealed class World
     public readonly List<FxEvent> Fx = [];
 
     /// <summary>One sample per simulated second, for the per-minute readouts.</summary>
-    public readonly List<double> AtpWindow = [];
+    public readonly RateWindow AtpWindow = new(SimulationBalance.RateWindowSeconds);
 
-    public readonly List<double> DnaWindow = [];
+    public readonly RateWindow DnaWindow = new(SimulationBalance.RateWindowSeconds);
 
     public static World Create(int infection, Levels lab, IEnumerable<GeneId> unlocked, uint? seed = null)
     {
