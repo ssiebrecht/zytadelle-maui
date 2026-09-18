@@ -71,9 +71,20 @@ public static class UpgradeCatalog
         new(GeneId.DnaPerCycle, GeneTab.Utility, "DNA / Cycle", "DNA granted at cycle end", ValueFmt.Num),
     ];
 
-    private static readonly Dictionary<GeneId, UpgradeDef> ById = All.ToDictionary(u => u.Id);
+    /// <summary>Indexed by <see cref="GeneId"/>, not looked up - <see cref="All"/> is already in
+    /// enum order, checked once below so a future reorder fails loudly instead of misrouting a
+    /// lookup.</summary>
+    private static readonly UpgradeDef[] ById = All.ToArray();
 
-    public static UpgradeDef Def(GeneId id) => ById[id];
+    static UpgradeCatalog()
+    {
+        for (var i = 0; i < ById.Length; i++)
+            if (ById[i].Id != (GeneId)i)
+                throw new InvalidOperationException(
+                    $"UpgradeCatalog.All[{i}] is {ById[i].Id}, expected {(GeneId)i} - All must stay in GeneId order.");
+    }
+
+    public static UpgradeDef Def(GeneId id) => ById[(int)id];
 
     public static readonly IReadOnlyList<(GeneTab Tab, string Label)> Tabs =
     [

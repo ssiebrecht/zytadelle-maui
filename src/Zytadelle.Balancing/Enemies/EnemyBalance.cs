@@ -27,5 +27,25 @@ public static class EnemyBalance
         [EnemyKind.Boss] = new(EnemyKind.Boss, Hp: 20, Atk: 1, Speed: 2.58, AttackInterval: 2, Radius: 5.5, Dna: 25),
     };
 
-    public static EnemyDef Def(EnemyKind kind) => All[kind];
+    /// <summary>Same instances as <see cref="All"/>, indexed by <see cref="EnemyKind"/> for the
+    /// spawn hot path; marked so the reflection walk does not present these numbers a second time.</summary>
+    [BalanceIdentity]
+    public static EnemyDef[] Defs { get; } = BuildDefs();
+
+    private static EnemyDef[] BuildDefs()
+    {
+        var defs = new EnemyDef[All.Count];
+        foreach (var (kind, def) in All) defs[(int)kind] = def;
+        return defs;
+    }
+
+    static EnemyBalance()
+    {
+        for (var i = 0; i < Defs.Length; i++)
+            if (Defs[i].Kind != (EnemyKind)i)
+                throw new InvalidOperationException(
+                    $"EnemyBalance.Defs[{i}] is {Defs[i].Kind}, expected {(EnemyKind)i} - All must stay in EnemyKind order.");
+    }
+
+    public static EnemyDef Def(EnemyKind kind) => Defs[(int)kind];
 }

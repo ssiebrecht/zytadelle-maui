@@ -19,6 +19,10 @@ public static class InfectionBalance
     public static int UnlockCycle { get; set; } = 100;
 
     /// <summary>Falls back to the first tier, so a corrupt save cannot crash the hub.</summary>
-    public static InfectionDef Def(int infection) =>
-        All.FirstOrDefault(t => t.Infection == infection) ?? All[0];
+    public static InfectionDef Def(int infection)
+    {
+        for (var i = 0; i < All.Count; i++)
+            if (All[i].Infection == infection) return All[i];
+        return All[0];
+    }
 }

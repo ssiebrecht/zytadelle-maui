@@ -31,10 +31,20 @@ public static class GeneRegistry
         new(GeneId.DnaPerCycle, typeof(DnaPerCycleGene), () => DnaPerCycleGene.Cap, () => DnaPerCycleGene.UnlockDna, () => DnaPerCycleGene.BaseValue, DnaPerCycleGene.ValueGrowth, DnaPerCycleGene.Price),
     ];
 
-    private static readonly IReadOnlyDictionary<GeneId, GeneDefinition> ById =
-        All.ToDictionary(gene => gene.Id);
+    /// <summary>Indexed by <see cref="GeneId"/>, not looked up - <see cref="All"/> is already in
+    /// enum order, checked once below so a future reorder fails loudly instead of misrouting a
+    /// lookup.</summary>
+    private static readonly GeneDefinition[] ById = All.ToArray();
 
-    public static GeneDefinition Get(GeneId id) => ById[id];
+    static GeneRegistry()
+    {
+        for (var i = 0; i < ById.Length; i++)
+            if (ById[i].Id != (GeneId)i)
+                throw new InvalidOperationException(
+                    $"GeneRegistry.All[{i}] is {ById[i].Id}, expected {(GeneId)i} - All must stay in GeneId order.");
+    }
+
+    public static GeneDefinition Get(GeneId id) => ById[(int)id];
 
     public static double ValueAt(GeneId id, int level) => Get(id).ValueAt(level);
 
