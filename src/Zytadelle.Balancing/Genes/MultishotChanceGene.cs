@@ -6,7 +6,7 @@ namespace Zytadelle.Balancing.Genes;
 public static class MultishotChanceGene
 {
     /// <summary>Highest level the gene can reach; the value curve is normalised to it.</summary>
-    public static int Cap { get; set; } = 99;
+    public static int Cap { get; set; } = 100;
 
     /// <summary>DNA the Gene Lab charges to unlock the gene. 0 = available from the start.</summary>
     public static int UnlockDna { get; set; } = 150;
@@ -16,5 +16,5 @@ public static class MultishotChanceGene
 
     public static UpgradeValueCurve ValueGrowth { get; } = new(0.495, 20, 0.6, 0.5);
 
-    public static PriceCurve Price { get; } = new(5, 4.68662, 2.60443);
+    public static PriceCurve Price { get; } = new(44.6360, 4.68662, 2.60443);
 }

@@ -16,11 +16,21 @@ public static class Combat
         return (CombatBalance.ApplyCrit(baseDmg, critDamage, crit), crit);
     }
 
-    public static void DamageEnemy(World w, ref Enemy e, double dmg)
+    /// <summary>
+    /// <paramref name="lifeSteal"/> is false for Thorns' reflect damage - it doesn't count as
+    /// damage the cell dealt, so it never heals the cell (matches how Thorns excludes itself in
+    /// the reference this was modelled on). Life steal also refuses to heal a cell that is
+    /// already dead: <see cref="UpdateProjectiles"/> can still land a later toxin on the same
+    /// tick a shot killed the cell, and healing then would leave a dead cell with positive
+    /// integrity packed into the death frame the results screen draws.
+    /// </summary>
+    public static void DamageEnemy(World w, ref Enemy e, double dmg, bool lifeSteal = true)
     {
         if (!e.Alive) return;
         e.Hp -= dmg;
         e.Flash = RenderBalance.EnemyFlash;
+        if (lifeSteal && !w.Dead && w.Stats.LifeSteal > 0)
+            w.Cell.Hp = Math.Min(w.Cell.MaxHp, w.Cell.Hp + dmg * w.Stats.LifeSteal);
         if (e.Hp <= 0) Kill(w, ref e);
     }
 
@@ -130,6 +140,9 @@ public static class Combat
         proj.Bounces = bounces;
         proj.HitSlot = hitSlot;
         proj.HitCount = bounces > 0 ? 1 : 0;
+        // A toxin from the cell never has a shooter to reflect Thorns onto.
+        proj.ShooterIndex = -1;
+        proj.ShooterId = -1;
         proj.Life = CellBalance.ProjectileLifetime;
         // Struct default is false, not the class field initializer it replaces.
         proj.Alive = true;
@@ -161,8 +174,8 @@ public static class Combat
 
         foreach (ref var p in w.Projectiles.AsSpan())
         {
-            if (p.TargetIndex < 0) continue;
-            p.TargetIndex = remap[p.TargetIndex];
+            if (p.TargetIndex >= 0) p.TargetIndex = remap[p.TargetIndex];
+            if (p.ShooterIndex >= 0) p.ShooterIndex = remap[p.ShooterIndex];
         }
     }
 
@@ -260,6 +273,13 @@ public static class Combat
                 KillProjectile(w, ref p);
                 DamageCell(w, p.Dmg);
                 w.PushFx(FxKind.Hit, p.X, p.Y);
+
+                if (w.Stats.Thorns > 0 && p.ShooterIndex >= 0)
+                {
+                    ref var shooter = ref w.Enemies[p.ShooterIndex];
+                    if (shooter.Alive && shooter.Id == p.ShooterId)
+                        DamageEnemy(w, ref shooter, shooter.MaxHp * CombatBalance.ThornsAgainst(w.Stats.Thorns, shooter.Kind == EnemyKind.Boss), lifeSteal: false);
+                }
             }
         }
     }
@@ -304,7 +324,7 @@ public static class Combat
             if (e.AttackCd > 0) continue;
 
             e.AttackCd = e.AttackInterval;
-            if (e.IsRanged) Shoot(w, ref e); else HitCell(w, ref e);
+            if (e.IsRanged) Shoot(w, ref e, i); else HitCell(w, ref e);
             if (w.Dead) return;
         }
     }
@@ -313,10 +333,12 @@ public static class Combat
     {
         DamageCell(w, e.Atk * e.DmgMult);
         w.PushFx(FxKind.Hit, e.X, e.Y);
+        if (w.Stats.Thorns > 0)
+            DamageEnemy(w, ref e, e.MaxHp * CombatBalance.ThornsAgainst(w.Stats.Thorns, e.Kind == EnemyKind.Boss), lifeSteal: false);
         e.DmgMult += CombatBalance.HeatupPerHit;
     }
 
-    private static void Shoot(World w, ref Enemy e)
+    private static void Shoot(World w, ref Enemy e, int index)
     {
         var d = Math.Sqrt(e.X * e.X + e.Y * e.Y);
         if (d == 0) d = 1;
@@ -335,6 +357,10 @@ public static class Combat
         proj.TargetIndex = -1;
         proj.TargetId = -1;
         proj.HitSlot = -1;
+        // Who fired it, for Thorns to reflect back onto on landing - remapped by CompactEnemies
+        // exactly like TargetIndex/TargetId above.
+        proj.ShooterIndex = index;
+        proj.ShooterId = e.Id;
         proj.Alive = true;
         Debug.Assert(proj.Alive, "Projectile spawned without its required explicit Alive=true.");
 

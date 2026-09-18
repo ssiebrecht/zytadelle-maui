@@ -98,6 +98,17 @@ public struct Projectile : IEntity
     /// <see cref="Sim.Combat.UpdateProjectiles"/> even across a remap.</summary>
     public int TargetId;
 
+    /// <summary>
+    /// The enemy that fired this shot, for Thorns to reflect back onto when it lands - the same
+    /// index/id pairing as <see cref="TargetIndex"/>/<see cref="TargetId"/>, remapped by
+    /// <see cref="Sim.Combat.CompactEnemies"/> the same way. -1 for a toxin from the cell, which
+    /// never has a shooter.
+    /// </summary>
+    public int ShooterIndex;
+
+    /// <summary>Paired with <see cref="ShooterIndex"/>; -1 when there is no shooter.</summary>
+    public int ShooterId;
+
     /// <summary>Diffusion hops left. 0 means the toxin stops on its target.</summary>
     public int Bounces;
 

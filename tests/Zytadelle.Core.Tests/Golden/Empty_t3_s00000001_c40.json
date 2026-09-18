@@ -3,18 +3,18 @@
   "scenario": "Empty_t3_s00000001_c40",
   "ticks": 350,
   "died": true,
-  "finalHash": "93d19d4d16ccfe38",
+  "finalHash": "3abd440033622e86",
   "renderHash": "362f36b7489226f1",
   "checkpoints": [
     {
       "cycle": 1,
       "tick": 300,
-      "hash": "fce03e23a9c68c4b"
+      "hash": "76a6d14e26adaba1"
     },
     {
       "cycle": 1,
       "tick": 350,
-      "hash": "93d19d4d16ccfe38"
+      "hash": "3abd440033622e86"
     }
   ],
   "summary": {
@@ -30,7 +30,7 @@
     "killsRanged": 0,
     "killsBoss": 0,
     "crits": 0,
-    "runBuys": 1
+    "runBuys": 0
   },
   "generatedWith": "net10.0.12/win-x64"
 }

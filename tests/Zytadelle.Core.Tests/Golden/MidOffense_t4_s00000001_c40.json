@@ -1,366 +1,421 @@
 {
   "probeVersion": 1,
   "scenario": "MidOffense_t4_s00000001_c40",
-  "ticks": 17892,
+  "ticks": 20910,
   "died": true,
-  "finalHash": "ce527fd255ad989c",
-  "renderHash": "d91afc9b48f68d64",
+  "finalHash": "b52b5110f6617e85",
+  "renderHash": "acfbb80fbe63c301",
   "checkpoints": [
     {
       "cycle": 1,
       "tick": 300,
-      "hash": "15e30b6f457b3852"
+      "hash": "5c0cf926fff72eea"
     },
     {
       "cycle": 1,
       "tick": 600,
-      "hash": "65ca764b32ca25e2"
+      "hash": "a985a1178b90b525"
     },
     {
       "cycle": 1,
       "tick": 900,
-      "hash": "bd6d69c37e1aee9f"
+      "hash": "4692652fac4785a0"
     },
     {
       "cycle": 1,
       "tick": 1200,
-      "hash": "35414a15d5617c56"
+      "hash": "f69d9512c1028d49"
     },
     {
       "cycle": 1,
       "tick": 1500,
-      "hash": "82a9e1e9d207a4bd"
+      "hash": "b48e8f2bd5c14bac"
     },
     {
       "cycle": 1,
       "tick": 1800,
-      "hash": "6547d4f8da336d6b"
+      "hash": "69299aa97f8b2e9d"
     },
     {
       "cycle": 1,
       "tick": 2100,
-      "hash": "2e1de2a04a3b65a9"
+      "hash": "9f808b061e40d9f7"
     },
     {
       "cycle": 2,
       "tick": 2101,
-      "hash": "c7c53b9173007eb7"
+      "hash": "fdc69a2f5e65ab85"
     },
     {
       "cycle": 2,
       "tick": 2400,
-      "hash": "8d0570bf30b2e5a5"
+      "hash": "b86bdae5e9380588"
     },
     {
       "cycle": 2,
       "tick": 2700,
-      "hash": "afacaec139e63f7d"
+      "hash": "81c996b575404cfa"
     },
     {
       "cycle": 2,
       "tick": 3000,
-      "hash": "519f4499c83636fb"
+      "hash": "2c532db962932c55"
     },
     {
       "cycle": 2,
       "tick": 3300,
-      "hash": "61bf31c02575eb54"
+      "hash": "342f06e9943e7994"
     },
     {
       "cycle": 2,
       "tick": 3600,
-      "hash": "48329f3f86597df3"
+      "hash": "0565d5ae1da84f2f"
     },
     {
       "cycle": 2,
       "tick": 3900,
-      "hash": "6db5f01c9c1f289d"
+      "hash": "6774f2ca6dd932d7"
     },
     {
       "cycle": 2,
       "tick": 4200,
-      "hash": "23969584fc3a4b2f"
+      "hash": "7ccef98a48e3f911"
     },
     {
       "cycle": 3,
       "tick": 4201,
-      "hash": "4d73a2d98249e5a5"
+      "hash": "9b1ce6aeec0d1cee"
     },
     {
       "cycle": 3,
       "tick": 4500,
-      "hash": "cb39144d70ba2956"
+      "hash": "c05c373630c97b6a"
     },
     {
       "cycle": 3,
       "tick": 4800,
-      "hash": "94bdce9079a7cc6e"
+      "hash": "287222be5e21e3c4"
     },
     {
       "cycle": 3,
       "tick": 5100,
-      "hash": "7742dbfaff6fd33d"
+      "hash": "76f5c0c53d95dd9c"
     },
     {
       "cycle": 3,
       "tick": 5400,
-      "hash": "98f1c478205dc054"
+      "hash": "cc739a104f3db5a8"
     },
     {
       "cycle": 3,
       "tick": 5700,
-      "hash": "8da63a26f4f65b83"
+      "hash": "f567b9f8edf01797"
     },
     {
       "cycle": 3,
       "tick": 6000,
-      "hash": "6cb2ced351f5e21a"
+      "hash": "c8d7f1153eda6240"
     },
     {
       "cycle": 3,
       "tick": 6300,
-      "hash": "a89d8d7596008d90"
+      "hash": "a9a5c332442eb906"
     },
     {
       "cycle": 4,
       "tick": 6301,
-      "hash": "84de32590adcf763"
+      "hash": "d8a4a2479d4c8f81"
     },
     {
       "cycle": 4,
       "tick": 6600,
-      "hash": "acabcf8d4f9b53d8"
+      "hash": "a39814b5c5a6a3c8"
     },
     {
       "cycle": 4,
       "tick": 6900,
-      "hash": "3c8eda50a589c7a0"
+      "hash": "499d36ed347e0360"
     },
     {
       "cycle": 4,
       "tick": 7200,
-      "hash": "2ec7f89a5f72bf56"
+      "hash": "953800d069c58094"
     },
     {
       "cycle": 4,
       "tick": 7500,
-      "hash": "c1bef664258b2e23"
+      "hash": "afd4f3423f940323"
     },
     {
       "cycle": 4,
       "tick": 7800,
-      "hash": "23660c32b4d3f3e2"
+      "hash": "ad46380185878bcc"
     },
     {
       "cycle": 4,
       "tick": 8100,
-      "hash": "f394c57662887183"
+      "hash": "30fd90694a42b2a2"
     },
     {
       "cycle": 4,
       "tick": 8400,
-      "hash": "fd51e117a086c277"
+      "hash": "86b23a57c76e8cc2"
     },
     {
       "cycle": 5,
       "tick": 8401,
-      "hash": "27c85e8d86a5cffe"
+      "hash": "112e6cbcf0ebd40c"
     },
     {
       "cycle": 5,
       "tick": 8700,
-      "hash": "2bf0a35ff0073689"
+      "hash": "20006719154278ed"
     },
     {
       "cycle": 5,
       "tick": 9000,
-      "hash": "9e100212bed4c9ae"
+      "hash": "8600b488402f8e9a"
     },
     {
       "cycle": 5,
       "tick": 9300,
-      "hash": "f8c945f26261d49e"
+      "hash": "df44e70f64bd9a50"
     },
     {
       "cycle": 5,
       "tick": 9600,
-      "hash": "f4c3ded00b7b119f"
+      "hash": "a6a4a8937d65486e"
     },
     {
       "cycle": 5,
       "tick": 9900,
-      "hash": "03755ab65f72c73a"
+      "hash": "6fb25e9ac8bc272f"
     },
     {
       "cycle": 5,
       "tick": 10200,
-      "hash": "2a3e490ab8d3845b"
+      "hash": "b694858b106f0c33"
     },
     {
       "cycle": 5,
       "tick": 10500,
-      "hash": "04195cba07e2ce7e"
+      "hash": "1cccd7cdb897ebc3"
     },
     {
       "cycle": 6,
       "tick": 10501,
-      "hash": "0f7fb69c9b76610a"
+      "hash": "e0c001fbfb8d9d18"
     },
     {
       "cycle": 6,
       "tick": 10800,
-      "hash": "7b1d17027a9482c9"
+      "hash": "62083f1812c46a95"
     },
     {
       "cycle": 6,
       "tick": 11100,
-      "hash": "b1242a72bf481743"
+      "hash": "a5ad805ce0e8bf13"
     },
     {
       "cycle": 6,
       "tick": 11400,
-      "hash": "cc842769de322a27"
+      "hash": "a22176e5304cf6ca"
     },
     {
       "cycle": 6,
       "tick": 11700,
-      "hash": "afce32623a4492b1"
+      "hash": "f744105620ef2482"
     },
     {
       "cycle": 6,
       "tick": 12000,
-      "hash": "cbde5e5f47c575f1"
+      "hash": "70bc385c008ea7e0"
     },
     {
       "cycle": 6,
       "tick": 12300,
-      "hash": "73eeafdfab83a4a0"
+      "hash": "af7f887f5d3a2461"
     },
     {
       "cycle": 6,
       "tick": 12600,
-      "hash": "e9d15125348cd4ea"
+      "hash": "2ab3f7e4ba950b92"
     },
     {
       "cycle": 7,
       "tick": 12601,
-      "hash": "4bf9322317b098fc"
+      "hash": "d119702044d2101e"
     },
     {
       "cycle": 7,
       "tick": 12900,
-      "hash": "44fa70b78a3c1f6d"
+      "hash": "2e379dbf7c4daeff"
     },
     {
       "cycle": 7,
       "tick": 13200,
-      "hash": "ac2bf049eaf0202e"
+      "hash": "e83fff66c3bc0b69"
     },
     {
       "cycle": 7,
       "tick": 13500,
-      "hash": "c782293ba42ffb6d"
+      "hash": "1ee70984a3b72f30"
     },
     {
       "cycle": 7,
       "tick": 13800,
-      "hash": "6ed8b84c3e28db5b"
+      "hash": "f58818e9a173645e"
     },
     {
       "cycle": 7,
       "tick": 14100,
-      "hash": "16db6d5e6ba323be"
+      "hash": "732e4049473bfc66"
     },
     {
       "cycle": 7,
       "tick": 14400,
-      "hash": "1e28ab56cdf01f06"
+      "hash": "0eae0d8f0c8e73bc"
     },
     {
       "cycle": 7,
       "tick": 14700,
-      "hash": "ed1c9b8c73be271b"
+      "hash": "71500e31648efe2d"
     },
     {
       "cycle": 8,
       "tick": 14701,
-      "hash": "4d452d66362beba4"
+      "hash": "39ce0641bc51833a"
     },
     {
       "cycle": 8,
       "tick": 15000,
-      "hash": "1c723a1632c1db72"
+      "hash": "6e37bf0e10a63567"
     },
     {
       "cycle": 8,
       "tick": 15300,
-      "hash": "5cdd226d2eebda6f"
+      "hash": "5b3515d8e79dfe53"
     },
     {
       "cycle": 8,
       "tick": 15600,
-      "hash": "e2bd95dd469fdbf1"
+      "hash": "f2c41facddf9995d"
     },
     {
       "cycle": 8,
       "tick": 15900,
-      "hash": "aaf2792a54e353ea"
+      "hash": "1b86861cbb80678c"
     },
     {
       "cycle": 8,
       "tick": 16200,
-      "hash": "85c0351bcb18cd86"
+      "hash": "9093724a0dab81ab"
     },
     {
       "cycle": 8,
       "tick": 16500,
-      "hash": "7078954620ab6112"
+      "hash": "513da231f0c4505b"
     },
     {
       "cycle": 8,
       "tick": 16800,
-      "hash": "facd5caae0985689"
+      "hash": "a2c2669d99292508"
     },
     {
       "cycle": 9,
       "tick": 16801,
-      "hash": "72bc85322cd66397"
+      "hash": "10eba46ed7239083"
     },
     {
       "cycle": 9,
       "tick": 17100,
-      "hash": "c7c270460dacaf44"
+      "hash": "6d3dc66d3093d6c4"
     },
     {
       "cycle": 9,
       "tick": 17400,
-      "hash": "20ae73b5bea0c584"
+      "hash": "6398d6b4ccd57c91"
     },
     {
       "cycle": 9,
       "tick": 17700,
-      "hash": "22320adac7ff271f"
+      "hash": "fdab1f486c2bd3b4"
     },
     {
       "cycle": 9,
-      "tick": 17892,
-      "hash": "ce527fd255ad989c"
+      "tick": 18000,
+      "hash": "f52a3388c9b037d6"
+    },
+    {
+      "cycle": 9,
+      "tick": 18300,
+      "hash": "7d690cefcd304ac5"
+    },
+    {
+      "cycle": 9,
+      "tick": 18600,
+      "hash": "4e704ee8062e70e3"
+    },
+    {
+      "cycle": 9,
+      "tick": 18900,
+      "hash": "c5f179fdebafabeb"
+    },
+    {
+      "cycle": 10,
+      "tick": 18901,
+      "hash": "a6cdb3ea41fb911e"
+    },
+    {
+      "cycle": 10,
+      "tick": 19200,
+      "hash": "4119e1454fdfaae0"
+    },
+    {
+      "cycle": 10,
+      "tick": 19500,
+      "hash": "605cda54b2d3acbb"
+    },
+    {
+      "cycle": 10,
+      "tick": 19800,
+      "hash": "4878dd7780d9f899"
+    },
+    {
+      "cycle": 10,
+      "tick": 20100,
+      "hash": "26e4d624b709f58a"
+    },
+    {
+      "cycle": 10,
+      "tick": 20400,
+      "hash": "f5965fc0f6b69e0a"
+    },
+    {
+      "cycle": 10,
+      "tick": 20700,
+      "hash": "5ab20df861e6ca75"
+    },
+    {
+      "cycle": 10,
+      "tick": 20910,
+      "hash": "b52b5110f6617e85"
     }
   ],
   "summary": {
-    "cycle": 9,
-    "dna": 287,
-    "atpEarned": 279.3999999999995,
-    "kills": 199,
-    "time": 298.1833333333908,
+    "cycle": 10,
+    "dna": 289,
+    "atpEarned": 289.29999999999893,
+    "kills": 239,
+    "time": 348.48333333334506,
     "infection": 4,
-    "killsBasic": 187,
-    "killsFast": 9,
-    "killsTank": 3,
+    "killsBasic": 217,
+    "killsFast": 18,
+    "killsTank": 4,
     "killsRanged": 0,
     "killsBoss": 0,
-    "crits": 80,
-    "runBuys": 30
+    "crits": 50,
+    "runBuys": 5
   },
   "generatedWith": "net10.0.12/win-x64"
 }

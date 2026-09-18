@@ -6,7 +6,7 @@ namespace Zytadelle.Balancing.Genes;
 public static class CritChanceGene
 {
     /// <summary>Highest level the gene can reach; the value curve is normalised to it.</summary>
-    public static int Cap { get; set; } = 79;
+    public static int Cap { get; set; } = 100;
 
     /// <summary>DNA the Gene Lab charges to unlock the gene. 0 = available from the start.</summary>
     public static int UnlockDna { get; set; }
@@ -14,7 +14,7 @@ public static class CritChanceGene
     /// <summary>Value at level 0, before any purchase.</summary>
     public static double BaseValue { get; set; } = 0.01;
 
-    public static UpgradeValueCurve ValueGrowth { get; } = new(0.79, 20, 0.6, 0.2);
+    public static UpgradeValueCurve ValueGrowth { get; } = new(0.74, 20, 0.6, 0.2);
 
-    public static PriceCurve Price { get; } = new(2, 4.81437, 2.65188);
+    public static PriceCurve Price { get; } = new(19.5212, 4.81437, 2.65188);
 }

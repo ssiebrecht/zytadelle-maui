@@ -16,5 +16,5 @@ public static class DefAbsGene
 
     public static UpgradeValueCurve ValueGrowth { get; } = new(92117351, 15, 2, 0.75, wavePeriod: 24);
 
-    public static PriceCurve Price { get; } = new(2, 3.71341, 2.20738);
+    public static PriceCurve Price { get; } = new(98.5953, 3.71341, 2.20738);
 }

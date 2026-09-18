@@ -30,7 +30,7 @@ public sealed class Levels
 }
 
 /// <summary>
-/// The effective value of every gene. Recomputed only on a purchase, never per tick - nineteen
+/// The effective value of every gene. Recomputed only on a purchase, never per tick - twenty-one
 /// doubles that the whole simulation reads.
 /// </summary>
 public sealed class Stats
@@ -63,6 +63,8 @@ public sealed class Stats
     public double Regen => _v[(int)GeneId.Regen];
     public double DefPct => _v[(int)GeneId.DefPct];
     public double DefAbs => _v[(int)GeneId.DefAbs];
+    public double Thorns => _v[(int)GeneId.Thorns];
+    public double LifeSteal => _v[(int)GeneId.LifeSteal];
     public double AtpBonus => _v[(int)GeneId.AtpBonus];
     public double AtpPerCycle => _v[(int)GeneId.AtpPerCycle];
     public double StartAtp => _v[(int)GeneId.StartAtp];

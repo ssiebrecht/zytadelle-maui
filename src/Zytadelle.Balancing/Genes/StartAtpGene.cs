@@ -6,7 +6,7 @@ namespace Zytadelle.Balancing.Genes;
 public static class StartAtpGene
 {
     /// <summary>Highest level the gene can reach; the value curve is normalised to it.</summary>
-    public static int Cap { get; set; } = 99;
+    public static int Cap { get; set; } = 100;
 
     /// <summary>DNA the Gene Lab charges to unlock the gene. 0 = available from the start.</summary>
     public static int UnlockDna { get; set; } = 40;
@@ -16,5 +16,5 @@ public static class StartAtpGene
 
     public static UpgradeValueCurve ValueGrowth { get; } = new(990, 1, 0, 0, waveAmplitude: 0);
 
-    public static PriceCurve Price { get; } = new(15, 2.22327, 3.25416);
+    public static PriceCurve Price { get; } = new(15, 6.58795, 3.25416);
 }

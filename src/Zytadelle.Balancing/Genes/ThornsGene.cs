@@ -2,19 +2,19 @@ using Zytadelle.Balancing.Curves;
 
 namespace Zytadelle.Balancing.Genes;
 
-/// <summary>Diffusion Chance: chance a toxin diffuses onward after a hit.</summary>
-public static class BounceChanceGene
+/// <summary>Spike Coat: % of an attacking pathogen's max HP reflected back on every hit taken.</summary>
+public static class ThornsGene
 {
     /// <summary>Highest level the gene can reach; the value curve is normalised to it.</summary>
-    public static int Cap { get; set; } = 100;
+    public static int Cap { get; set; } = 200;
 
     /// <summary>DNA the Gene Lab charges to unlock the gene. 0 = available from the start.</summary>
-    public static int UnlockDna { get; set; } = 150;
+    public static int UnlockDna { get; set; } = 100;
 
     /// <summary>Value at level 0, before any purchase.</summary>
     public static double BaseValue { get; set; }
 
-    public static UpgradeValueCurve ValueGrowth { get; } = new(0.68, 20, 0.6, 0.6);
+    public static UpgradeValueCurve ValueGrowth { get; } = new(0.75, 20, 0.6, 0.35);
 
-    public static PriceCurve Price { get; } = new(34.0869, 6.37758, 2.92615);
+    public static PriceCurve Price { get; } = new(396.782, 20, 2.6);
 }

@@ -6,7 +6,7 @@ namespace Zytadelle.Balancing.Genes;
 public static class BounceTargetsGene
 {
     /// <summary>Highest level the gene can reach; the value curve is normalised to it.</summary>
-    public static int Cap { get; set; } = 7;
+    public static int Cap { get; set; } = 8;
 
     /// <summary>DNA the Gene Lab charges to unlock the gene. 0 = available from the start.</summary>
     public static int UnlockDna { get; set; } = 250;
@@ -16,5 +16,5 @@ public static class BounceTargetsGene
 
     public static UpgradeValueCurve ValueGrowth { get; } = new(7, 1, 0, 0, waveAmplitude: 0);
 
-    public static PriceCurve Price { get; } = new(125, 3, 1.56);
+    public static PriceCurve Price { get; } = new(137579, 3, 1.56);
 }

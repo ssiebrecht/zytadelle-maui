@@ -24,6 +24,8 @@ public static class GeneRegistry
         new(GeneId.Regen, typeof(RegenGene), () => RegenGene.Cap, () => RegenGene.UnlockDna, () => RegenGene.BaseValue, RegenGene.ValueGrowth, RegenGene.Price),
         new(GeneId.DefPct, typeof(DefPctGene), () => DefPctGene.Cap, () => DefPctGene.UnlockDna, () => DefPctGene.BaseValue, DefPctGene.ValueGrowth, DefPctGene.Price),
         new(GeneId.DefAbs, typeof(DefAbsGene), () => DefAbsGene.Cap, () => DefAbsGene.UnlockDna, () => DefAbsGene.BaseValue, DefAbsGene.ValueGrowth, DefAbsGene.Price),
+        new(GeneId.Thorns, typeof(ThornsGene), () => ThornsGene.Cap, () => ThornsGene.UnlockDna, () => ThornsGene.BaseValue, ThornsGene.ValueGrowth, ThornsGene.Price),
+        new(GeneId.LifeSteal, typeof(LifeStealGene), () => LifeStealGene.Cap, () => LifeStealGene.UnlockDna, () => LifeStealGene.BaseValue, LifeStealGene.ValueGrowth, LifeStealGene.Price),
         new(GeneId.AtpBonus, typeof(AtpBonusGene), () => AtpBonusGene.Cap, () => AtpBonusGene.UnlockDna, () => AtpBonusGene.BaseValue, AtpBonusGene.ValueGrowth, AtpBonusGene.Price),
         new(GeneId.AtpPerCycle, typeof(AtpPerCycleGene), () => AtpPerCycleGene.Cap, () => AtpPerCycleGene.UnlockDna, () => AtpPerCycleGene.BaseValue, AtpPerCycleGene.ValueGrowth, AtpPerCycleGene.Price),
         new(GeneId.StartAtp, typeof(StartAtpGene), () => StartAtpGene.Cap, () => StartAtpGene.UnlockDna, () => StartAtpGene.BaseValue, StartAtpGene.ValueGrowth, StartAtpGene.Price, buyableInRun: false),

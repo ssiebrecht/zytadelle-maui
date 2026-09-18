@@ -1,7 +1,7 @@
 namespace Zytadelle.Balancing.Genes;
 
 /// <summary>
-/// The nineteen genes, in catalog order. The order is load-bearing: it is the order the Gene Lab
+/// The twenty-one genes, in catalog order. The order is load-bearing: it is the order the Gene Lab
 /// and the in-culture shop list them in, and the order lifetime spend is summed in. The member
 /// names are the keys of the save file, so they never change.
 /// </summary>
@@ -23,6 +23,8 @@ public enum GeneId
     Regen,
     DefPct,
     DefAbs,
+    Thorns,
+    LifeSteal,
     // Metabolism
     AtpBonus,
     AtpPerCycle,

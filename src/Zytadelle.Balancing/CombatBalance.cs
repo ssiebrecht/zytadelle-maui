@@ -17,6 +17,13 @@ public static class CombatBalance
     public static double ApplyCrit(double raw, double critDamage, bool crit) =>
         crit ? raw * critDamage : raw;
 
+    /// <summary>Thorns is halved against a boss, same as everywhere else it scales down vs bosses.</summary>
+    public static double ThornsBossFactor { get; set; } = 0.5;
+
+    /// <summary>Thorns reflect for one hit: a % of the attacker's max HP, halved if it's a boss.</summary>
+    public static double ThornsAgainst(double thorns, bool isBoss) =>
+        isBoss ? thorns * ThornsBossFactor : thorns;
+
     /// <summary>
     /// Toxins released beyond the first when Burst fires. Burst counts the primary shot, so a gene
     /// value of 2 means one extra toxin - the opposite convention to <see cref="BounceHops"/>.

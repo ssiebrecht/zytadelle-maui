@@ -35,13 +35,14 @@ public sealed record UpgradeDef(GeneId Id, GeneTab Tab, string Name, string Desc
 }
 
 /// <summary>
-/// The nineteen genes in catalog order, with the mapping the balance was taken from:
+/// The twenty-one genes in catalog order, with the mapping the balance was taken from:
 /// Toxicity is Damage, Secretion Rate is Attack Speed, Rupture Chance is Crit Chance, Rupture
 /// Damage is Crit Damage, Reach is Range, Membrane is Health, Repair is Health Regen,
 /// Resistance % is Defense %, Cell Wall is Defense Absolute, ATP Yield is Cash Bonus,
 /// ATP / Cycle is Cash / Wave, ATP Reserve is Starting Cash, DNA / Kill is Coins / Kill,
 /// DNA / Cycle is Coins / Wave, Granule Chance and Count are Multishot, Diffusion Chance, Depth
-/// and Range are Bounce Shot.
+/// and Range are Bounce Shot. Spike Coat (Thorns) and Phagocytosis (Life Steal) are new, modelled
+/// on The Tower's Thorn Damage and Lifesteal stats rather than carried over from the browser build.
 /// </summary>
 public static class UpgradeCatalog
 {
@@ -63,6 +64,8 @@ public static class UpgradeCatalog
         new(GeneId.Regen, GeneTab.Defense, "Repair", "Integrity restored per second", ValueFmt.PerSec),
         new(GeneId.DefPct, GeneTab.Defense, "Resistance %", "Incoming damage reduction", ValueFmt.Pct),
         new(GeneId.DefAbs, GeneTab.Defense, "Cell Wall", "Flat damage blocked per hit", ValueFmt.Num),
+        new(GeneId.Thorns, GeneTab.Defense, "Spike Coat", "Reflects a % of an attacker's max HP back on hit", ValueFmt.Pct),
+        new(GeneId.LifeSteal, GeneTab.Defense, "Phagocytosis", "% of damage dealt returned as integrity", ValueFmt.Pct),
         // Metabolism
         new(GeneId.AtpBonus, GeneTab.Utility, "ATP Yield", "Multiplier on all ATP earned", ValueFmt.Mult),
         new(GeneId.AtpPerCycle, GeneTab.Utility, "ATP / Cycle", "ATP granted at cycle end", ValueFmt.Atp),

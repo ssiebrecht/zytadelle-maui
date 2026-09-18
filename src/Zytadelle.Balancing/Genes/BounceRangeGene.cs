@@ -16,5 +16,5 @@ public static class BounceRangeGene
 
     public static UpgradeValueCurve ValueGrowth { get; } = new(60, 20, 0.6, 0.5, 0.20, 3);
 
-    public static PriceCurve Price { get; } = new(10, 18.0121, 5.55655);
+    public static PriceCurve Price { get; } = new(383488000, 18.0121, 5.55655);
 }
