@@ -80,13 +80,17 @@ public static class Combat
         if (extra <= 0) return;
 
         // Never two toxins on the same pathogen: with nothing else in reach the extra toxins are
-        // simply not released, so a lone boss stays a pure damage check.
-        var taken = new List<int> { w.Enemies[targetIdx].Id };
+        // simply not released, so a lone boss stays a pure damage check. Reused scratch instead of
+        // a fresh List per volley - grown lazily, so a build that never buys Multishot never pays.
+        if (w.MultishotScratch.Length < extra + 1) w.MultishotScratch = new int[extra + 1];
+        var taken = w.MultishotScratch;
+        taken[0] = w.Enemies[targetIdx].Id;
+        var takenCount = 1;
         for (var i = 0; i < extra; i++)
         {
-            var nextIdx = Targeting.NearestFrom(w.Enemies, 0, 0, s.Range, taken);
+            var nextIdx = Targeting.NearestFrom(w.Enemies, 0, 0, s.Range, taken.AsSpan(0, takenCount));
             if (nextIdx < 0) break;
-            taken.Add(w.Enemies[nextIdx].Id);
+            taken[takenCount++] = w.Enemies[nextIdx].Id;
             SpawnToxin(w, nextIdx, RollDamage(s.Damage, s.CritChance, s.CritDamage, w.Rng), RollBounces(w, s));
         }
     }
@@ -101,6 +105,16 @@ public static class Combat
         var dy = target.Y;
         var d = Math.Sqrt(dx * dx + dy * dy);
         if (d == 0) d = 1;
+
+        // Capacity is exactly bounces + 1: Bounces only ever counts down from here, so this is the
+        // most this toxin's hit list can ever hold across its whole lifetime.
+        var hitSlot = -1;
+        if (bounces > 0)
+        {
+            hitSlot = w.HitSlab.Rent(bounces + 1);
+            w.HitSlab.Set(hitSlot, 0, target.Id);
+        }
+
         w.Projectiles.Add(new Projectile
         {
             Id = w.NextId++,
@@ -115,7 +129,8 @@ public static class Combat
             TargetIndex = targetIndex,
             TargetId = target.Id,
             Bounces = bounces,
-            Hit = bounces > 0 ? [target.Id] : null,
+            HitSlot = hitSlot,
+            HitCount = bounces > 0 ? 1 : 0,
             Life = CellBalance.ProjectileLifetime,
         });
     }
@@ -166,6 +181,18 @@ public static class Combat
 
     // ---------------------------------------------------------------- projectiles
 
+    /// <summary>Kills a projectile and returns its hit-list slot (if it rented one) to the slab -
+    /// the one place that does both, so a death site can never free a projectile without freeing
+    /// what it was renting, or vice versa.</summary>
+    private static void KillProjectile(World w, Projectile p)
+    {
+        p.Alive = false;
+        w.DeadProjectiles++;
+        if (p.HitSlot < 0) return;
+        w.HitSlab.Free(p.HitSlot);
+        p.HitSlot = -1;
+    }
+
     /// <summary>
     /// Moves every toxin and shot. A diffusing toxin carries its full damage on from where it
     /// landed, keeps its rupture flag across every hop, and never returns to a pathogen it already
@@ -181,8 +208,7 @@ public static class Combat
             p.Life -= dt;
             if (p.Life <= 0)
             {
-                p.Alive = false;
-                w.DeadProjectiles++;
+                KillProjectile(w, p);
                 continue;
             }
 
@@ -191,8 +217,7 @@ public static class Combat
                 var targetIdx = p.TargetIndex;
                 if (targetIdx < 0 || !w.Enemies[targetIdx].Alive)
                 {
-                    p.Alive = false;
-                    w.DeadProjectiles++;
+                    KillProjectile(w, p);
                     continue;
                 }
 
@@ -214,19 +239,19 @@ public static class Combat
                     DamageEnemy(w, t, p.Dmg);
 
                     var nextIdx = p.Bounces > 0
-                        ? Targeting.NearestFrom(w.Enemies, t.X, t.Y, w.Stats.BounceRange, p.Hit!)
+                        ? Targeting.NearestFrom(w.Enemies, t.X, t.Y, w.Stats.BounceRange, w.HitSlab.Span(p.HitSlot, p.HitCount))
                         : -1;
                     if (nextIdx < 0)
                     {
-                        p.Alive = false;
-                        w.DeadProjectiles++;
+                        KillProjectile(w, p);
                         continue;
                     }
 
                     var next = w.Enemies[nextIdx];
                     p.Bounces--;
                     p.Hops++;
-                    p.Hit!.Add(next.Id);
+                    w.HitSlab.Set(p.HitSlot, p.HitCount, next.Id);
+                    p.HitCount++;
                     p.TargetIndex = nextIdx;
                     p.TargetId = next.Id;
                     p.X = t.X;
@@ -245,8 +270,7 @@ public static class Combat
                 p.X += p.Vx * dt;
                 p.Y += p.Vy * dt;
                 if (Math.Sqrt(p.X * p.X + p.Y * p.Y) > CellBalance.Radius) continue;
-                p.Alive = false;
-                w.DeadProjectiles++;
+                KillProjectile(w, p);
                 DamageCell(w, p.Dmg);
                 w.PushFx(FxKind.Hit, p.X, p.Y);
             }

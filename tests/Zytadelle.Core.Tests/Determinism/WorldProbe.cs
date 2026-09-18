@@ -77,9 +77,9 @@ public static class WorldProbe
             buf.I32(p.Hops);
             buf.F64(p.Life);
             buf.Bool(p.Alive);
-            buf.I32(p.Hit?.Count ?? 0);
-            if (p.Hit is null) continue;
-            foreach (var hitId in p.Hit) buf.I32(hitId);
+            buf.I32(p.HitCount);
+            if (p.HitSlot < 0) continue;
+            foreach (var hitId in w.HitSlab.Span(p.HitSlot, p.HitCount)) buf.I32(hitId);
         }
     }
 }

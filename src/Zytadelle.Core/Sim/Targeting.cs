@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 using Zytadelle.Core.Entities;
 
 namespace Zytadelle.Core.Sim;
@@ -34,15 +32,14 @@ public static class Targeting
 
     /// <summary>Index of the nearest living pathogen within range of a point, skipping the ones
     /// already hit, or -1.</summary>
-    public static int NearestFrom(List<Enemy> enemies, double x, double y, double range, List<int> skip)
+    public static int NearestFrom(List<Enemy> enemies, double x, double y, double range, ReadOnlySpan<int> skip)
     {
-        var skipSpan = CollectionsMarshal.AsSpan(skip);
         var best = -1;
         var bestD = range * range;
         for (var i = 0; i < enemies.Count; i++)
         {
             var e = enemies[i];
-            if (!e.Alive || skipSpan.Contains(e.Id)) continue;
+            if (!e.Alive || skip.Contains(e.Id)) continue;
             var dx = e.X - x;
             var dy = e.Y - y;
             var d = dx * dx + dy * dy;

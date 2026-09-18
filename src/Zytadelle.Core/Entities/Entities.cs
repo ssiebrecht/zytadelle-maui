@@ -74,8 +74,15 @@ public sealed class Projectile
     /// <summary>Diffusion hops left. 0 means the toxin stops on its target.</summary>
     public int Bounces;
 
-    /// <summary>Pathogens this toxin already hit - it never diffuses back into one of them.</summary>
-    public List<int>? Hit;
+    /// <summary>
+    /// Slot in World.HitSlab holding the pathogen ids this toxin already hit - it never diffuses
+    /// back into one of them. -1 for a shot that was never bounce-capable (Bounces was 0 at spawn),
+    /// which never rents a slot at all.
+    /// </summary>
+    public int HitSlot = -1;
+
+    /// <summary>How many of HitSlot's rented capacity are filled so far.</summary>
+    public int HitCount;
 
     /// <summary>Hops taken so far. A rupture counts once per toxin, not once per hop.</summary>
     public int Hops;

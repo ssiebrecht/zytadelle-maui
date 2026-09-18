@@ -70,6 +70,13 @@ public sealed class World
     /// every compaction; grows if an unusually large enemy list ever needs a bigger one.</summary>
     public int[] EnemyRemap = new int[SimulationBalance.MaxEnemies + 1];
 
+    /// <summary>Backs every bounce-capable toxin's hit list - see <see cref="Entities.Projectile.HitSlot"/>.</summary>
+    public readonly IntSlab HitSlab = new(64);
+
+    /// <summary>Scratch for a multishot volley's already-targeted ids, reused across shots instead
+    /// of a fresh List per shot; grown lazily, so a build that never buys Multishot never pays for it.</summary>
+    public int[] MultishotScratch = [];
+
     public required Cell Cell { get; init; }
 
     public double Atp;
