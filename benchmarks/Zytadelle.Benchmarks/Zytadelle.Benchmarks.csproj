@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <!-- BenchmarkDotNet needs real optimized code even for a Debug F5; there is no meaningful
+         Debug configuration for this project. -->
+    <Configurations>Release</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Zytadelle.Core\Zytadelle.Core.csproj" />
+    <ProjectReference Include="..\..\src\Zytadelle.Balancing\Zytadelle.Balancing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="BenchmarkDotNet.Attributes" />
+    <Using Include="Zytadelle.Balancing" />
+    <Using Include="Zytadelle.Balancing.Curves" />
+    <Using Include="Zytadelle.Balancing.Enemies" />
+    <Using Include="Zytadelle.Balancing.Genes" />
+    <Using Include="Zytadelle.Balancing.Infections" />
+    <Using Include="Zytadelle.Core.Engine" />
+    <Using Include="Zytadelle.Core.Entities" />
+    <Using Include="Zytadelle.Core.Sim" />
+    <Using Include="Zytadelle.Core.Upgrades" />
+    <!-- Scenario.cs/PurchasePolicy.cs are linked in from the test project as-is, namespace included. -->
+    <Using Include="Zytadelle.Core.Tests.Determinism" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The scenario/build/policy machinery is identical to the test project's - shared by linking
+         the files in rather than a third shared project, since it is a handful of files with no
+         packaging concerns of its own. -->
+    <Compile Include="..\..\tests\Zytadelle.Core.Tests\Determinism\Scenario.cs" Link="Determinism\Scenario.cs" />
+    <Compile Include="..\..\tests\Zytadelle.Core.Tests\Determinism\PurchasePolicy.cs" Link="Determinism\PurchasePolicy.cs" />
+  </ItemGroup>
+
+</Project>

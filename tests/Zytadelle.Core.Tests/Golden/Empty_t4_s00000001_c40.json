@@ -1,0 +1,36 @@
+{
+  "probeVersion": 1,
+  "scenario": "Empty_t4_s00000001_c40",
+  "ticks": 350,
+  "died": true,
+  "finalHash": "21694f539a9d5440",
+  "renderHash": "da110a99154c8910",
+  "checkpoints": [
+    {
+      "cycle": 1,
+      "tick": 300,
+      "hash": "0c38c271af96c1fc"
+    },
+    {
+      "cycle": 1,
+      "tick": 350,
+      "hash": "21694f539a9d5440"
+    }
+  ],
+  "summary": {
+    "cycle": 1,
+    "dna": 0,
+    "atpEarned": 0,
+    "kills": 0,
+    "time": 5.816666666666651,
+    "infection": 4,
+    "killsBasic": 0,
+    "killsFast": 0,
+    "killsTank": 0,
+    "killsRanged": 0,
+    "killsBoss": 0,
+    "crits": 0,
+    "runBuys": 1
+  },
+  "generatedWith": "net10.0.12/win-x64"
+}

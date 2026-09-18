@@ -11,11 +11,23 @@ dies, then banks DNA that flows into permanent levels in the Gene Lab between ru
 ## Commands
 
 ```
-dotnet run --project src/Zytadelle.App    # the game
-dotnet build                              # build everything (Zytadelle.slnx)
+dotnet run --project src/Zytadelle.App                       # the game
+dotnet build                                                 # build everything (Zytadelle.slnx)
+dotnet test tests/Zytadelle.Core.Tests -c Release             # golden-determinism + regression tests
+dotnet test tests/Zytadelle.Core.Tests -c Release --filter "Category!=Long"   # skip the two long-running goldens
+dotnet run --project benchmarks/Zytadelle.Benchmarks -c Release -- --quick [build]   # ~5s throughput/alloc read, no BenchmarkDotNet wait
 ```
 
-No test projects exist in the repo yet.
+`Zytadelle.Core.Tests/Determinism` pins the simulation bit-for-bit: same seed, same Gene Lab levels,
+same purchases → the same `World` forever, so the performance refactor tracked in the repo's plan can
+change *how* the tick runs without ever changing *what* it produces. See its README for the
+regenerate-goldens workflow (`ZYTADELLE_UPDATE_GOLDEN=1`) and the Windows-x64 platform pin. Never
+regenerate a golden to make a red test green without first understanding why it went red.
+
+`Zytadelle.Benchmarks` measures the same engine with BenchmarkDotNet (`dotnet run ... -c Release`,
+no args, for the full suite) plus two non-BDN dev-loop modes: `--quick [build]` for a fast read while
+iterating, `--loop [build]` as a stable long-running target to attach `dotnet-trace`/`dotnet-counters`
+to. `--compare <baseDir> <diffDir>` diffs two BDN `--exporters json` runs.
 
 Debug env vars for `Zytadelle.App` (Debug builds only, read in `GameHost.Initialise`):
 - `ZYTADELLE_STRESS=1` — starts a maxed-out defensive culture at top speed, for frame-budget checks.
@@ -58,6 +70,10 @@ Three projects, in dependency order:
 packaging of .NET 10 Blazor Hybrid has an open regression), `InvariantGlobalization=true` (every
 number that reaches CSS or the save is formatted invariantly, so making the whole app invariant
 removes the decimal-comma-slip class of bug).
+
+Two more projects sit alongside these three, both reading only `Core` + `Balancing`: `tests/Zytadelle.Core.Tests`
+(golden-determinism and regression tests) and `benchmarks/Zytadelle.Benchmarks` (BenchmarkDotNet).
+Neither is part of the shipping product's dependency chain above.
 
 ## Working across the App ↔ JS boundary
 

@@ -22,7 +22,13 @@ public static class FrameEncoder
     public const int ProjectileSize = 20;
     public const int FxSize = 20;
 
-    private static byte[] _scratch = new byte[WorstCase()];
+    /// <summary>
+    /// Thread-static: a headless simulator steps many <c>World</c>s in parallel, and a shared buffer
+    /// here would let one thread's frame overwrite another's mid-encode. The App only ever calls
+    /// this from its own frame-clock thread, so for it this is just one buffer, same as before.
+    /// </summary>
+    [ThreadStatic]
+    private static byte[]? _scratch;
 
     /// <summary>The largest frame the current caps can produce, so the usual frame never resizes.</summary>
     private static int WorstCase() =>
@@ -38,8 +44,9 @@ public static class FrameEncoder
         var fxCount = Math.Min(w.Fx.Count, SimulationBalance.FxRingCap + 1);
 
         var size = HeaderSize + enemyCount * EnemySize + projCount * ProjectileSize + fxCount * FxSize;
-        if (_scratch.Length < size) _scratch = new byte[size];
-        var b = _scratch.AsSpan(0, size);
+        var scratch = _scratch;
+        if (scratch is null || scratch.Length < size) _scratch = scratch = new byte[Math.Max(size, WorstCase())];
+        var b = scratch.AsSpan(0, size);
 
         BinaryPrimitives.WriteDoubleLittleEndian(b, w.Time);
         WriteF32(b, 8, w.Cell.Hp);

@@ -3,3 +3,7 @@ obj/
 *.user
 .vs/
 .idea/
+
+# BenchmarkDotNet's scratch output (generated sub-project, logs, per-run reports). The numbers that
+# matter are copied deliberately into benchmarks/baseline/ - that's what gets committed.
+BenchmarkDotNet.Artifacts/

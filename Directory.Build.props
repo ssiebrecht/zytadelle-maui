@@ -1,0 +1,31 @@
+<Project>
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- Every number that reaches the UI or a save is already formatted invariantly (see
+         Zytadelle.App.csproj); making every project invariant removes the decimal-comma-slip class
+         of bug everywhere, not just in the App, and costs nothing on a library project. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- Explicit, not a change: both are already the SDK's own default. Written down so a golden
+         test's platform pin (see tests/Zytadelle.Core.Tests/README.md) is a decision on record, not
+         an accident that a future SDK default could quietly undo. -->
+    <Deterministic>true</Deterministic>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <!--
+    Deliberately NOT here: ServerGarbageCollection / ConcurrentGarbageCollection. Both are
+    runtimeconfig.json switches, not compiler settings - setting them at the repo root would
+    silently change the shipped Zytadelle.App's GC mode along with everything else. They belong
+    only in the future headless simulator's own Zytadelle.Sim.csproj (Server=true, Concurrent=false:
+    a batch workload with no UI thread to protect, trading pause time for throughput).
+  -->
+
+</Project>

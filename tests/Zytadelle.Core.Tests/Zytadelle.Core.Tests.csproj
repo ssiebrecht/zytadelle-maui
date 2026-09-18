@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Zytadelle.Core\Zytadelle.Core.csproj" />
+    <ProjectReference Include="..\..\src\Zytadelle.Balancing\Zytadelle.Balancing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Same balancing usings every consumer gets, plus the Core namespaces the probes read. -->
+    <Using Include="Xunit" />
+    <Using Include="Zytadelle.Balancing" />
+    <Using Include="Zytadelle.Balancing.Curves" />
+    <Using Include="Zytadelle.Balancing.Enemies" />
+    <Using Include="Zytadelle.Balancing.Genes" />
+    <Using Include="Zytadelle.Balancing.Infections" />
+    <Using Include="Zytadelle.Balancing.Missions" />
+    <Using Include="Zytadelle.Core.Engine" />
+    <Using Include="Zytadelle.Core.Entities" />
+    <Using Include="Zytadelle.Core.Sim" />
+    <Using Include="Zytadelle.Core.Upgrades" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,176 @@
+{
+  "probeVersion": 1,
+  "scenario": "Empty_t1_s9e3779b9_c40",
+  "ticks": 7902,
+  "died": true,
+  "finalHash": "d0cef90d5a0b28fb",
+  "renderHash": "327374567cd62163",
+  "checkpoints": [
+    {
+      "cycle": 1,
+      "tick": 300,
+      "hash": "9efd879980b76464"
+    },
+    {
+      "cycle": 1,
+      "tick": 600,
+      "hash": "b67e9d3f8ff21dd3"
+    },
+    {
+      "cycle": 1,
+      "tick": 900,
+      "hash": "d95a2d8c9cdaa72d"
+    },
+    {
+      "cycle": 1,
+      "tick": 1200,
+      "hash": "7577340d714b3436"
+    },
+    {
+      "cycle": 1,
+      "tick": 1500,
+      "hash": "c8f9bb9b6d0c898a"
+    },
+    {
+      "cycle": 1,
+      "tick": 1800,
+      "hash": "472f59bba28ad85d"
+    },
+    {
+      "cycle": 1,
+      "tick": 2100,
+      "hash": "4e222730f1a42365"
+    },
+    {
+      "cycle": 2,
+      "tick": 2101,
+      "hash": "5f54a7ffc065db01"
+    },
+    {
+      "cycle": 2,
+      "tick": 2400,
+      "hash": "3e9416776fae84e5"
+    },
+    {
+      "cycle": 2,
+      "tick": 2700,
+      "hash": "d1ab62c5e6feb406"
+    },
+    {
+      "cycle": 2,
+      "tick": 3000,
+      "hash": "878d0a9687b18b85"
+    },
+    {
+      "cycle": 2,
+      "tick": 3300,
+      "hash": "1445458771c21bcf"
+    },
+    {
+      "cycle": 2,
+      "tick": 3600,
+      "hash": "cd121f2e346cfaee"
+    },
+    {
+      "cycle": 2,
+      "tick": 3900,
+      "hash": "35177571f5c6c91f"
+    },
+    {
+      "cycle": 2,
+      "tick": 4200,
+      "hash": "e18d5287d81a7e17"
+    },
+    {
+      "cycle": 3,
+      "tick": 4201,
+      "hash": "9f2d103c3acb7bc3"
+    },
+    {
+      "cycle": 3,
+      "tick": 4500,
+      "hash": "e9f1f85efc9c4c01"
+    },
+    {
+      "cycle": 3,
+      "tick": 4800,
+      "hash": "7519d20f1b90beb4"
+    },
+    {
+      "cycle": 3,
+      "tick": 5100,
+      "hash": "6054c22d34dd6f5c"
+    },
+    {
+      "cycle": 3,
+      "tick": 5400,
+      "hash": "ab85ba8fccdf0b50"
+    },
+    {
+      "cycle": 3,
+      "tick": 5700,
+      "hash": "7380cdb6fd9d6aa3"
+    },
+    {
+      "cycle": 3,
+      "tick": 6000,
+      "hash": "84440f072024a1e4"
+    },
+    {
+      "cycle": 3,
+      "tick": 6300,
+      "hash": "7753f18f588ce6d8"
+    },
+    {
+      "cycle": 4,
+      "tick": 6301,
+      "hash": "f4ad8cd208e24b22"
+    },
+    {
+      "cycle": 4,
+      "tick": 6600,
+      "hash": "bfec3f4f2a3697e4"
+    },
+    {
+      "cycle": 4,
+      "tick": 6900,
+      "hash": "9187ca4a64a442aa"
+    },
+    {
+      "cycle": 4,
+      "tick": 7200,
+      "hash": "e3698c9bb0f878a1"
+    },
+    {
+      "cycle": 4,
+      "tick": 7500,
+      "hash": "2517a980abbe71ff"
+    },
+    {
+      "cycle": 4,
+      "tick": 7800,
+      "hash": "fde77bada800932c"
+    },
+    {
+      "cycle": 4,
+      "tick": 7902,
+      "hash": "d0cef90d5a0b28fb"
+    }
+  ],
+  "summary": {
+    "cycle": 4,
+    "dna": 19,
+    "atpEarned": 81,
+    "kills": 81,
+    "time": 131.68333333333027,
+    "infection": 1,
+    "killsBasic": 77,
+    "killsFast": 3,
+    "killsTank": 1,
+    "killsRanged": 0,
+    "killsBoss": 0,
+    "crits": 7,
+    "runBuys": 1
+  },
+  "generatedWith": "net10.0.12/win-x64"
+}

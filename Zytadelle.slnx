@@ -4,4 +4,15 @@
     <Project Path="src/Zytadelle.Balancing/Zytadelle.Balancing.csproj" />
     <Project Path="src/Zytadelle.Core/Zytadelle.Core.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Zytadelle.Core.Tests/Zytadelle.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Zytadelle.Benchmarks/Zytadelle.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="CLAUDE.md" />
+  </Folder>
 </Solution>
